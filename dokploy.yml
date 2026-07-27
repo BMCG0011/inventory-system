@@ -30,13 +30,11 @@
 
 services:
   app:
-    build:
-      context: .
-      args:
-        # VITE_ variables must be build-time args so they are embedded in the
-        # frontend bundle. The Dockerfile ARG declarations handle this.
-        VITE_KIOSK_SECRET: ${KIOSK_SECRET}
-        VITE_PRINTING_ENABLED: ${PRINTING_ENABLED:-true}
+    # Image is built in GitHub Actions and pushed to Docker Hub on every push
+    # to main. Dokploy pulls it here — the server never runs the build.
+    # VITE_KIOSK_SECRET and VITE_PRINTING_ENABLED are baked in at CI build time
+    # via the VITE_KIOSK_SECRET Actions secret and VITE_PRINTING_ENABLED Actions var.
+    image: bmcg0011/inventory-system:main
     restart: unless-stopped
     depends_on:
       db:
