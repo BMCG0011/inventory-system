@@ -1,12 +1,18 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/server/lib/prisma";
-import { admin, customSession, genericOAuth } from "better-auth/plugins";
+import { admin, customSession } from "better-auth/plugins";
 export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ["authentik"],
+      trustedProviders: ["github"],
+    },
+  },
+  socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID ?? "",
+      clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
     },
   },
   plugins: [
@@ -23,18 +29,6 @@ export const auth = betterAuth({
       };
     }),
     admin(),
-    genericOAuth({
-      config: [
-        {
-          providerId: "authentik", // Matches the callback URL slug
-          clientId: process.env.AUTHENTIK_CLIENT_ID ?? "",
-          clientSecret: process.env.AUTHENTIK_CLIENT_SECRET ?? "",
-          discoveryUrl:
-            "https://auth.monashautomation.com/application/o/inventory-system/.well-known/openid-configuration",
-          scopes: ["openid", "profile", "email"],
-        },
-      ],
-    }),
   ],
   emailAndPassword: {
     enabled: false,

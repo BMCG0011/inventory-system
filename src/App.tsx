@@ -37,6 +37,8 @@ import KioskPrintStatus from "@/pages/kiosk/KioskPrintStatus";
 import KioskProvision from "@/pages/kiosk/KioskProvision";
 import { KioskGuardLayout } from "@/pages/kiosk/KioskGuardLayout";
 
+const printingEnabled = import.meta.env.VITE_PRINTING_ENABLED !== "false";
+
 const App = () => {
   React.useEffect(() => {
     // On mount, apply theme based on localStorage or system preference
@@ -66,10 +68,12 @@ const App = () => {
                 />
                 <Route path="/kiosk/checkout" element={<KioskCheckout />} />
                 <Route path="/kiosk/checkin" element={<KioskCheckin />} />
-                <Route
-                  path="/kiosk/print-status"
-                  element={<KioskPrintStatus />}
-                />
+                {printingEnabled && (
+                  <Route
+                    path="/kiosk/print-status"
+                    element={<KioskPrintStatus />}
+                  />
+                )}
               </Route>
               <Route path="/" element={<ProtectedLayout />}>
                 <Route index element={<Navigate to="/dashboard" replace />} />
@@ -98,16 +102,20 @@ const App = () => {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/checkin" element={<CheckIn />} />
-                <Route path="/print" element={<PrintGcode />} />
-                <Route path="/print-monitor" element={<PrintMonitoring />} />
-                <Route path="/print-cam" element={<PrintCam />} />
-                <Route
-                  path="/printer-management"
-                  element={<PrinterManagement />}
-                />
-                <Route path="/print-queue" element={<PrintQueue />} />
-                <Route path="/print-stats" element={<PrintStats />} />
-                <Route path="/print-history" element={<PrintHistory />} />
+                {printingEnabled && (
+                  <>
+                    <Route path="/print" element={<PrintGcode />} />
+                    <Route path="/print-monitor" element={<PrintMonitoring />} />
+                    <Route path="/print-cam" element={<PrintCam />} />
+                    <Route
+                      path="/printer-management"
+                      element={<PrinterManagement />}
+                    />
+                    <Route path="/print-queue" element={<PrintQueue />} />
+                    <Route path="/print-stats" element={<PrintStats />} />
+                    <Route path="/print-history" element={<PrintHistory />} />
+                  </>
+                )}
               </Route>
             </Routes>
           </KioskProvider>

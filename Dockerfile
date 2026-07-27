@@ -15,6 +15,13 @@ COPY . .
 COPY tsconfig.json .
 COPY tsconfig.app.json .
 COPY tsconfig.node.json .
+# VITE_ variables must be declared as build args so they are embedded in the
+# frontend bundle at build time. Pass via docker-compose build.args or --build-arg.
+ARG VITE_KIOSK_SECRET
+ENV VITE_KIOSK_SECRET=$VITE_KIOSK_SECRET
+ARG VITE_PRINTING_ENABLED=true
+ENV VITE_PRINTING_ENABLED=$VITE_PRINTING_ENABLED
+
 RUN bunx prisma generate
 RUN bun run build
 

@@ -40,6 +40,8 @@ import { ThemeToggle } from "@/components/sidebar/theme-toggle";
 import { useCart } from "@/contexts/cart-context";
 import { cn } from "@/lib/utils";
 
+const printingEnabled = import.meta.env.VITE_PRINTING_ENABLED !== "false";
+
 const coreItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Assets", url: "/assets", icon: Box },
@@ -125,34 +127,36 @@ export function AppSidebar() {
               </SidebarMenu>
 
               {/* Printing group */}
-              <div className="mt-2">
-                <button
-                  onClick={() => setPrintingOpen((o) => !o)}
-                  className="flex w-full items-center justify-between px-2 py-1 text-xs font-medium text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
-                >
-                  <span className="uppercase tracking-wider">Printing</span>
-                  <ChevronDown
-                    className={cn(
-                      "h-3 w-3 transition-transform duration-200",
-                      !printingOpen && "-rotate-90",
-                    )}
-                  />
-                </button>
-                {printingOpen && (
-                  <SidebarMenu className="mt-0.5">
-                    {printingItems.map((item) => (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild>
-                          <a onClick={() => void navigate(item.url)}>
-                            <item.icon />
-                            <span>{item.title}</span>
-                          </a>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                )}
-              </div>
+              {printingEnabled && (
+                <div className="mt-2">
+                  <button
+                    onClick={() => setPrintingOpen((o) => !o)}
+                    className="flex w-full items-center justify-between px-2 py-1 text-xs font-medium text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
+                  >
+                    <span className="uppercase tracking-wider">Printing</span>
+                    <ChevronDown
+                      className={cn(
+                        "h-3 w-3 transition-transform duration-200",
+                        !printingOpen && "-rotate-90",
+                      )}
+                    />
+                  </button>
+                  {printingOpen && (
+                    <SidebarMenu className="mt-0.5">
+                      {printingItems.map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton asChild>
+                            <a onClick={() => void navigate(item.url)}>
+                              <item.icon />
+                              <span>{item.title}</span>
+                            </a>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  )}
+                </div>
+              )}
 
               {/* Administration group — admins only */}
               {isAdmin && (

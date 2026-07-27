@@ -71,6 +71,8 @@ function expireUploadJob(jobId: string): void {
 // Load environment variables
 config();
 
+const printingEnabled = process.env.PRINTING_ENABLED !== "false";
+
 // ─── Process exit diagnostics ────────────────────────────────────────────────
 // Log WHY the process is dying so we can debug container restarts.
 process.on("uncaughtException", (err) => {
@@ -140,6 +142,25 @@ app.on(["POST", "GET"], "/api/auth/*", async (c) => {
     }
 });
 
+// Block print-related tRPC procedures when printing is disabled. Must be
+// registered before the tRPC handler so Hono matches it first.
+if (!printingEnabled) {
+    app.use("/api/trpc/*", async (c, next) => {
+        const segment = c.req.path.split("/api/trpc/")[1] ?? "";
+        const hasPrint = segment
+            .split(",")
+            .some(
+                (proc) =>
+                    proc === "print" ||
+                    proc.startsWith("print.") ||
+                    proc.startsWith("printQueue.") ||
+                    proc.startsWith("printStats."),
+            );
+        if (hasPrint) return c.json({ error: "Printing system is disabled" }, 503);
+        return next();
+    });
+}
+
 // tRPC route
 app.use(
     "/api/trpc/*",
@@ -162,6 +183,9 @@ app.onError((err, c) => {
     logger.error({ err }, "Unexpected error");
     return c.json({ error: "Internal server error" }, 500);
 });
+
+// ─── Print HTTP routes ────────────────────────────────────────────────────────
+// All routes below are only active when PRINTING_ENABLED != "false".
 
 // ─── Item image proxy ─────────────────────────────────────────────────────────
 app.get("/api/items/:id/image", async (c) => {
@@ -475,6 +499,7 @@ app.get("/api/users/:id/avatar", async (c) => {
 //   - If cache says "mjpeg" (null entry) → fall through to live proxy.
 //   - If cache is cold (undefined) → fall through to live proxy.
 app.get("/api/webcam/:printerId", async (c) => {
+    if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
     const session = await auth.api.getSession({
         headers: c.req.raw.headers,
     });
@@ -591,6 +616,7 @@ async function proxyWebcam(
 // Proxies the BamBuddy MJPEG camera stream so clients can view it without
 // exposing the BamBuddy endpoint or API key to the browser.
 app.get("/api/bambu-stream/:bambuddyId", async (c) => {
+    if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     if (!session?.user?.id)
         throw new HTTPException(401, { message: "Authentication required" });
@@ -673,6 +699,7 @@ app.get("/api/bambu-stream/:bambuddyId", async (c) => {
 // Proxies print-log thumbnails through the server so clients don't need the API key.
 // Uses a stream token (?token=xxx) as required by the BamBuddy thumbnail endpoint.
 app.get("/api/bambu-thumbnail/:entryId", async (c) => {
+    if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     if (!session?.user?.id)
         throw new HTTPException(401, { message: "Authentication required" });
@@ -738,6 +765,7 @@ app.get("/api/bambu-thumbnail/:entryId", async (c) => {
 
 // ─── BamBuddy stats export proxy ─────────────────────────────────────────────
 app.get("/api/bambu-stats-export", async (c) => {
+    if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     if (!session?.user?.id)
         throw new HTTPException(401, { message: "Authentication required" });
@@ -783,6 +811,7 @@ app.get("/api/bambu-stats-export", async (c) => {
 
 // ─── 3MF file upload to BamBuddy (async to avoid Cloudflare's 100s timeout) ──
 app.post("/api/print-queue/upload-3mf", async (c) => {
+    if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     if (!session?.user?.id)
         throw new HTTPException(401, { message: "Authentication required" });
@@ -853,6 +882,7 @@ app.post("/api/print-queue/upload-3mf", async (c) => {
 
 // ─── 3MF upload status polling ────────────────────────────────────────────────
 app.get("/api/print-queue/upload-status/:jobId", async (c) => {
+    if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     if (!session?.user?.id)
         throw new HTTPException(401, { message: "Authentication required" });
@@ -973,7 +1003,7 @@ if (metricsEnabled) {
 // ─── Start BamBuddy API polling for Prometheus metrics ─────────────────────
 // Always start the legacy poller when enabled — we may prefer the Prometheus
 // endpoint but fall back to the legacy cache if the passthrough fails.
-if (metricsEnabled && process.env.METRICS_BAMBU_ENABLED !== "false") {
+if (metricsEnabled && printingEnabled && process.env.METRICS_BAMBU_ENABLED !== "false") {
     initBambuMetricsListener();
 }
 
@@ -981,18 +1011,20 @@ if (metricsEnabled && process.env.METRICS_BAMBU_ENABLED !== "false") {
 // Sync Bambu printers from BamBuddy into local DB immediately on startup so
 // they appear in getPrinters / getLivePrinterStatuses before the first poller
 // cycle fires. Re-sync every 5 minutes to pick up newly registered printers.
-syncBambuPrinters().catch((err) =>
-    logger.error({ err }, "Bambu printer sync failed on startup"),
-);
-setInterval(
-    () =>
-        syncBambuPrinters().catch((err) =>
-            logger.error({ err }, "Bambu printer sync failed"),
-        ),
-    5 * 60 * 1000,
-);
-initPrintCamPoller();
-initPrintQueuePoller();
+if (printingEnabled) {
+    syncBambuPrinters().catch((err) =>
+        logger.error({ err }, "Bambu printer sync failed on startup"),
+    );
+    setInterval(
+        () =>
+            syncBambuPrinters().catch((err) =>
+                logger.error({ err }, "Bambu printer sync failed"),
+            ),
+        5 * 60 * 1000,
+    );
+    initPrintCamPoller();
+    initPrintQueuePoller();
+}
 
 export default {
     port: process.env.PORT ?? 3000,

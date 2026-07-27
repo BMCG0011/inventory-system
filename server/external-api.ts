@@ -162,6 +162,8 @@ async function resolveBambuPrinterByLocalId(printerId: string): Promise<number> 
 // ─── Route mount ─────────────────────────────────────────────────────────────
 
 export function mountExternalApiRoutes(app: Hono): void {
+    const printingEnabled = process.env.PRINTING_ENABLED !== "false";
+
     // ── POST /api/ext/print/start ─────────────────────────────────────────────
     // Start a print job by uploading a G-code file or specifying an archive ID.
     //
@@ -182,6 +184,7 @@ export function mountExternalApiRoutes(app: Hono): void {
     //   404 — studentId not found or printer not found
     //   502 — BamBuddy upstream error
     app.post("/api/ext/print/start", async (c) => {
+        if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
         const { requestId, start } = startRequest(c.req.raw);
         const path = "/api/ext/print/start";
         requireFypToken(c.req.raw, requestId);
@@ -339,6 +342,7 @@ export function mountExternalApiRoutes(app: Hono): void {
     //   404 — printer not found
     //   502 — BamBuddy upstream error
     app.get("/api/ext/printers/:printerId", async (c) => {
+        if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
         const { requestId, start } = startRequest(c.req.raw);
         const rawPrinterId = c.req.param("printerId");
         const path = `/api/ext/printers/${rawPrinterId}`;
@@ -421,6 +425,7 @@ export function mountExternalApiRoutes(app: Hono): void {
     // Success 200: { ok: true, action: "paused", printerId: number }
     // Errors: 400, 401, 404, 502
     app.post("/api/ext/printers/:printerId/pause", async (c) => {
+        if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
         const { requestId, start } = startRequest(c.req.raw);
         const rawPrinterId = c.req.param("printerId");
         const path = `/api/ext/printers/${rawPrinterId}/pause`;
@@ -463,6 +468,7 @@ export function mountExternalApiRoutes(app: Hono): void {
     // Success 200: { ok: true, action: "stopped", printerId: number }
     // Errors: 400, 401, 404, 502
     app.post("/api/ext/printers/:printerId/stop", async (c) => {
+        if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
         const { requestId, start } = startRequest(c.req.raw);
         const rawPrinterId = c.req.param("printerId");
         const path = `/api/ext/printers/${rawPrinterId}/stop`;
@@ -763,6 +769,7 @@ export function mountExternalApiRoutes(app: Hono): void {
     //
     // Errors: 401, 404, 502
     app.get("/api/ext/printers/:printerId/errors", async (c) => {
+        if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
         const { requestId, start } = startRequest(c.req.raw);
         const rawPrinterId = c.req.param("printerId");
         const path = `/api/ext/printers/${rawPrinterId}/errors`;
