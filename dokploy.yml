@@ -19,7 +19,6 @@
 #   POSTGRES_USER          (default: postgres)
 #   POSTGRES_DB            (default: inventory)
 #   S3_BUCKET              (default: gcode-vault)
-#   AUTHENTIK_CLIENT_ID / AUTHENTIK_CLIENT_SECRET
 #   OLLAMA_URL / OLLAMA_MODEL / OLLAMA_AUTH_TOKEN
 #   BAMBUDDY_ENDPOINT / BAMBUDDY_API_KEY
 #   PRINTER_URL
@@ -92,9 +91,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 90s
-    networks:
-      - dokploy-network
-      - internal
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.inventory.rule=Host(`${DOMAIN}`)"
@@ -102,7 +98,6 @@ services:
       - "traefik.http.routers.inventory.tls.certresolver=letsencrypt"
       # Port 4173 is vite preview; it proxies /api, /mcp, /metrics to :3000
       - "traefik.http.services.inventory.loadbalancer.server.port=4173"
-      - "traefik.docker.network=dokploy-network"
 
   db:
     image: postgres:15-alpine
@@ -119,8 +114,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    networks:
-      - internal
 
   minio:
     image: quay.io/minio/minio:latest
@@ -137,20 +130,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 15s
-    networks:
-      - internal
-    # To expose the MinIO web console at minio.${DOMAIN}, uncomment these and
-    # add minio to the dokploy-network as well:
-    # networks:
-    #   - dokploy-network
-    #   - internal
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.inventory-minio.rule=Host(`minio.${DOMAIN}`)"
-    #   - "traefik.http.routers.inventory-minio.entrypoints=websecure"
-    #   - "traefik.http.routers.inventory-minio.tls.certresolver=letsencrypt"
-    #   - "traefik.http.services.inventory-minio.loadbalancer.server.port=9001"
-    #   - "traefik.docker.network=dokploy-network"
 
   createbuckets:
     image: quay.io/minio/mc:latest
@@ -158,8 +137,6 @@ services:
     depends_on:
       minio:
         condition: service_healthy
-    networks:
-      - internal
     entrypoint: >
       /bin/sh -c "
       /usr/bin/mc alias set s3 http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
@@ -170,9 +147,3 @@ services:
 volumes:
   postgres_data:
   minio_data:
-
-networks:
-  dokploy-network:
-    external: true
-  internal:
-    internal: true
