@@ -3,12 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useKiosk } from "@/contexts/kiosk-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  LogOut,
-  Clock,
-  PackageCheck,
-  PackagePlus,
-} from "lucide-react";
+import { LogOut, Clock, PackageCheck, PackagePlus } from "lucide-react";
 import logoTextDark from "@/assets/Horizontal White & Blue.svg";
 import logoTextLight from "@/assets/Horizontal Black & Blue.svg";
 import { motion } from "framer-motion";

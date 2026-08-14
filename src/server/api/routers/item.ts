@@ -541,5 +541,5 @@ export const itemRouter = router({
           notesUpdatedBy: { select: { id: true, name: true } },
         },
       });
-    })
+    }),
 });
