@@ -179,15 +179,11 @@ model User {
     ItemRecords        ItemRecord[] @relation("UserToItemRecord")
     PerformedRecords   ItemRecord[] @relation("AdminPerformedItemRecord")
     ItemNotesUpdated   Item[]       @relation("ItemNotesUpdatedBy")
-    printers      Printer[]
-    gcodePrintJobs GcodePrintJob[]
     SuppliersCreated      ConsumableSupplier[] @relation("SupplierCreatedBy")
     ConsumableRequests    ConsumableRequest[]  @relation("RequestRequestedBy")
     ConsumablePurchases   ConsumableRequest[]  @relation("RequestPurchasedBy")
     Notifications         Notification[]       @relation("UserNotifications")
     AuditLogs             AuditLog[]           @relation("AuditActor")
-    PrintQueueSubmissions PrintQueueSubmission[]
-    PrintRatings          PrintRating[]
 
     role             String    @default("user")
     banned           Boolean?
@@ -249,64 +245,6 @@ model Verification {
     @@map("verification")
 }
 
-
-
-enum PrinterType {
-    PRUSA
-    BAMBU
-}
-
-enum GcodePrintJobStatus {
-    STORED
-    DISPATCHED
-    DISPATCH_FAILED
-}
-
-
-
-model Printer {
-    id              String   @id @default(uuid())
-    name            String
-    type            PrinterType
-    ipAddress       String   @unique
-    authToken       String?
-    serialNumber    String?
-    webcamUrl        String?
-    createdByUserId String
-    createdByUser   User     @relation(fields: [createdByUserId], references: [id])
-    printJobs       GcodePrintJob[]
-    createdAt       DateTime @default(now())
-    updatedAt       DateTime @updatedAt
-
-    @@index([ipAddress])
-    @@index([createdByUserId])
-}
-
-model GcodePrintJob {
-    id               String              @id @default(uuid())
-    userId           String
-    user             User                @relation(fields: [userId], references: [id])
-    printerId        String
-    printer          Printer             @relation(fields: [printerId], references: [id])
-    originalFilename String
-    storedFilename   String
-    s3Key            String?
-    fileHashSha256   String
-    fileSizeBytes    Int
-    status            GcodePrintJobStatus @default(STORED)
-    dispatchResponse  String?
-    dispatchError     String?
-    notionProjectId   String?
-    notionProjectName String?
-    personalUse       Boolean             @default(false)
-    createdAt         DateTime            @default(now())
-    updatedAt         DateTime            @updatedAt
-
-    @@index([userId])
-    @@index([printerId])
-    @@index([fileHashSha256])
-}
-
 model Chat {
   id                String   @id @default(uuid())
   title             String   @default("New Conversation")
@@ -347,73 +285,6 @@ enum AuditAction {
     REQUEST_STATUS_CHANGED
     REQUEST_CANCELLED
     REQUEST_RECEIVED
-}
-
-model PrintQueueSubmission {
-    id                      String    @id @default(uuid())
-    bambuddyQueueItemId     Int       @unique
-    bambuddyQueueCreatedAt  DateTime?
-    archiveId               Int?
-    archiveName             String?
-    user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId                  String
-    notionProjectId         String?
-    notionProjectName       String?
-    personalUse             Boolean   @default(false)
-    createdAt               DateTime  @default(now())
-
-    // Captured when the queue item reaches a terminal state
-    capturedStatus          String?
-    capturedAt              DateTime?
-    capturedStartedAt       DateTime?
-    capturedCompletedAt     DateTime?
-    capturedFilamentGrams   Float?
-    capturedFilamentType    String?
-    capturedFilamentColor   String?
-    capturedPrinterId       Int?
-    capturedPrinterName     String?
-    capturedLogEntryId      Int?
-
-    @@index([userId])
-    @@index([bambuddyQueueItemId])
-    @@index([capturedStatus])
-    @@index([capturedStartedAt, capturedPrinterId])
-    @@index([capturedLogEntryId])
-}
-
-enum PrintRatingSmiley {
-    GOOD
-    OKAY
-    BAD
-}
-
-enum PrintRatingTag {
-    GOOD
-    FAILED
-    STOPPED
-    MECHANICAL_ISSUE
-    FILAMENT_ISSUE
-    WARPING
-    STRINGING
-    LAYER_SHIFT
-    OTHER
-}
-
-model PrintRating {
-    id          String            @id @default(uuid())
-    bambuddyId  Int
-    printerName String?
-    fileName    String?
-    smiley      PrintRatingSmiley
-    tags        PrintRatingTag[]
-    notes       String?
-    user        User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
-    userId      String?
-    createdAt   DateTime          @default(now())
-
-    @@index([bambuddyId])
-    @@index([userId])
-    @@index([createdAt])
 }
 
 model AuditLog {

@@ -1,15 +1,11 @@
 import { router, userProcedure, adminProcedure } from "@/server/trpc";
-import { logger as rootLogger } from "@/server/lib/logger";
 
-const logger = rootLogger.child({ module: "router:item" });
 import { prisma } from "@/server/lib/prisma";
 import { getLocationTreeIds } from "@/server/lib/locationTree";
 import { z } from "zod";
 import { createItemInput, updateItemInput } from "@/server/schema/item.schema";
 import { itemCheckout } from "../utils/item/item.checkout";
 import { itemCheckin } from "../utils/item/item.checkin";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import type { PrintResponse } from "../utils/item/item.utils";
 import { itemBulkDelete } from "../utils/item/item.delete";
 
 export const itemRouter = router({
@@ -545,108 +541,5 @@ export const itemRouter = router({
           notesUpdatedBy: { select: { id: true, name: true } },
         },
       });
-    }),
-
-  printLabel: userProcedure
-    .input(
-      z.object({
-        itemId: z.uuid(),
-        quantity: z.number().positive(),
-        labelType: z
-          .union([z.literal(0), z.literal(1), z.literal(2)])
-          .default(0),
-      }),
-    )
-    .mutation(async ({ input }) => {
-      const { itemId, quantity, labelType } = input;
-      try {
-        // Verify that the itemId is valid
-        const item = await prisma.item.findUniqueOrThrow({
-          where: { id: itemId },
-          select: {
-            name: true,
-            serial: true,
-          },
-        });
-        const { serial, name } = item;
-        // Make request to the printer server
-        let response;
-        try {
-          logger.debug(
-            { url: process.env.PRINTER_URL ?? "http://localhost:6767/printer" },
-            "Printing via printer server",
-          );
-          response = await fetch(
-            process.env.PRINTER_URL ?? "http://localhost:6767/printer",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${process.env.PRINTER_TOKEN}`,
-              },
-              body: JSON.stringify({
-                name: name,
-                serial: serial,
-                quantity: quantity,
-                itemId: itemId,
-                labelType: labelType,
-              }),
-              // Add 5 second time out to prevent over-printing
-              signal: AbortSignal.timeout(5000),
-            },
-          );
-        } catch (e) {
-          logger.error({ err: e }, "Cannot reach printer server");
-          return {
-            ok: false as const,
-            error: `Cannot reach printer server`,
-          };
-        }
-        // Check HTTP status
-        if (!response.ok) {
-          const body = await response.text();
-          logger.error(
-            { status: response.status, body },
-            "Printer server error",
-          );
-          return {
-            ok: false as const,
-            error: `Printer server error: ${response.status}`,
-          };
-        }
-        // Parse JSON response
-        let data;
-        try {
-          data = (await response.json()) as PrintResponse;
-        } catch {
-          return {
-            ok: false as const,
-            error: `Invalid response from printer server`,
-          };
-        }
-        if (!data.ok) {
-          return {
-            ok: false as const,
-            error: data.error || "Print failed",
-          };
-        }
-        return {
-          ok: true as const,
-          itemId: itemId,
-        };
-      } catch (error) {
-        if (error instanceof PrismaClientKnownRequestError) {
-          if (error.code === "P2025") {
-            return {
-              ok: false as const,
-              error: `Item not found`,
-            };
-          }
-        }
-        return {
-          ok: false as const,
-          error: `Failed to process print request`,
-        };
-      }
-    }),
+    })
 });

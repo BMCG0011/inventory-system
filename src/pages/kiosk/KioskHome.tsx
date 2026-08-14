@@ -8,7 +8,6 @@ import {
   Clock,
   PackageCheck,
   PackagePlus,
-  Printer,
 } from "lucide-react";
 import logoTextDark from "@/assets/Horizontal White & Blue.svg";
 import logoTextLight from "@/assets/Horizontal Black & Blue.svg";
@@ -32,12 +31,6 @@ const actions = [
     description: "Return your loaned items",
     icon: PackageCheck,
     href: "/kiosk/checkin",
-  },
-  {
-    label: "Printer Status",
-    description: "View live printer status and queue",
-    icon: Printer,
-    href: "/kiosk/print-status",
   },
 ] as const;
 

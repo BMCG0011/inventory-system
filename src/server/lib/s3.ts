@@ -21,22 +21,6 @@ export const s3 = new S3Client({
   bucket: BUCKET,
 });
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Build a consistent S3 key for print job files.
- *
- * Format: prints/{userId}/{timestamp}_{sha256Prefix}_{sanitizedFilename}
- */
-export function buildPrintJobS3Key(
-  userId: string,
-  timestamp: number,
-  sha256Prefix: string,
-  sanitizedFilename: string,
-): string {
-  return `prints/${userId}/${timestamp}_${sha256Prefix}_${sanitizedFilename}`;
-}
-
 // ─── Upload ───────────────────────────────────────────────────────────────────
 
 /**

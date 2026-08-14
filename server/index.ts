@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { type Context, Hono } from "hono";
+import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { trpcServer } from "@hono/trpc-server";
 import { appRouter } from "@/server/api/routers/_app";
@@ -12,18 +12,12 @@ import { logger } from "@/server/lib/logger";
 import { StreamableHTTPTransport } from "@hono/mcp";
 import { createMcpServer } from "trpc-to-mcp";
 import { basicAuth } from "hono/basic-auth";
-import { collectMetrics, initBambuMetricsListener } from "./metrics";
+import { collectMetrics } from "./metrics";
 import {
     handleStatusJson,
     handleComponentsJson,
     handleUnresolvedIncidents,
 } from "./health";
-import {
-    initPrintCamPoller,
-    syncBambuPrinters,
-    getSnapshot,
-} from "@/server/lib/printCamPoller";
-import { initPrintQueuePoller } from "@/server/lib/printQueuePoller";
 import sharp from "sharp";
 import {
     uploadFile,
@@ -33,14 +27,6 @@ import {
     fileExists,
     downloadFile,
 } from "@/server/lib/s3";
-import {
-    uploadArchive as uploadBambuddyArchive,
-    searchBambuddyArchives,
-} from "@/server/lib/bambuddy";
-import {
-    buildPrintUploadFilename,
-    resolveUniqueFilename,
-} from "@/server/api/utils/print/print.utils";
 import { mountTamarinRoutes } from "@/server/lib/tamarin";
 import { mountExternalApiRoutes } from "./external-api";
 import { startMemberSyncScheduler } from "@/server/lib/member-sync";
@@ -53,25 +39,8 @@ const ALLOWED_IMAGE_TYPES = new Set([
     "image/gif",
 ]);
 
-// ─── In-memory 3MF upload job store ──────────────────────────────────────────
-// Tracks async BamBuddy upload jobs so the HTTP response can return immediately
-// (avoiding Cloudflare's 100s proxy timeout on large files).
-// Entries expire after 30 minutes to bound memory usage.
-type UploadJobState =
-    | { status: "pending"; progress: number } // 0–1 fraction of bytes sent to BamBuddy
-    | { status: "completed"; archiveId: number }
-    | { status: "failed"; error: string };
-
-const uploadJobs = new Map<string, UploadJobState>();
-
-function expireUploadJob(jobId: string): void {
-    setTimeout(() => uploadJobs.delete(jobId), 30 * 60 * 1000);
-}
-
 // Load environment variables
 config();
-
-const printingEnabled = process.env.PRINTING_ENABLED !== "false";
 
 // ─── Process exit diagnostics ────────────────────────────────────────────────
 // Log WHY the process is dying so we can debug container restarts.
@@ -142,25 +111,6 @@ app.on(["POST", "GET"], "/api/auth/*", async (c) => {
     }
 });
 
-// Block print-related tRPC procedures when printing is disabled. Must be
-// registered before the tRPC handler so Hono matches it first.
-if (!printingEnabled) {
-    app.use("/api/trpc/*", async (c, next) => {
-        const segment = c.req.path.split("/api/trpc/")[1] ?? "";
-        const hasPrint = segment
-            .split(",")
-            .some(
-                (proc) =>
-                    proc === "print" ||
-                    proc.startsWith("print.") ||
-                    proc.startsWith("printQueue.") ||
-                    proc.startsWith("printStats."),
-            );
-        if (hasPrint) return c.json({ error: "Printing system is disabled" }, 503);
-        return next();
-    });
-}
-
 // tRPC route
 app.use(
     "/api/trpc/*",
@@ -183,9 +133,6 @@ app.onError((err, c) => {
     logger.error({ err }, "Unexpected error");
     return c.json({ error: "Internal server error" }, 500);
 });
-
-// ─── Print HTTP routes ────────────────────────────────────────────────────────
-// All routes below are only active when PRINTING_ENABLED != "false".
 
 // ─── Item image proxy ─────────────────────────────────────────────────────────
 app.get("/api/items/:id/image", async (c) => {
@@ -490,411 +437,6 @@ app.get("/api/users/:id/avatar", async (c) => {
     });
 });
 
-// ─── Webcam proxy ────────────────────────────────────────────────────────────
-// Streams printer webcam feeds through the server so clients outside the local
-// network can view them. Requires an authenticated session.
-//
-// mode=cached_snapshot: serve the server-side polled snapshot from memory.
-//   - If cache is populated with bytes → return immediately (no upstream fetch).
-//   - If cache says "mjpeg" (null entry) → fall through to live proxy.
-//   - If cache is cold (undefined) → fall through to live proxy.
-app.get("/api/webcam/:printerId", async (c) => {
-    if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
-    const session = await auth.api.getSession({
-        headers: c.req.raw.headers,
-    });
-    if (!session?.user?.id) {
-        throw new HTTPException(401, { message: "Authentication required" });
-    }
-
-    const printerId = c.req.param("printerId");
-    const mode = c.req.query("mode");
-
-    // Serve from in-memory snapshot cache — no DB hit, no upstream fetch.
-    if (mode === "cached_snapshot") {
-        const cached = getSnapshot(printerId);
-        if (cached) {
-            return new Response(cached.bytes, {
-                status: 200,
-                headers: {
-                    "Content-Type": cached.contentType,
-                    "Cache-Control": "no-cache, no-store, must-revalidate",
-                },
-            });
-        }
-        // Cache is cold — fall through to live proxy below.
-    }
-
-    let webcamUrl: string;
-    let printerLabel: string;
-    try {
-        const printer = await prisma.printer.findUnique({
-            where: { id: printerId },
-            select: { webcamUrl: true, name: true },
-        });
-        if (!printer?.webcamUrl) {
-            throw new HTTPException(404, {
-                message: "Printer or webcam URL not found",
-            });
-        }
-        webcamUrl = printer.webcamUrl;
-        printerLabel = printer.name;
-    } catch (err) {
-        if (err instanceof HTTPException) throw err;
-        throw new HTTPException(502, { message: "Failed to look up printer" });
-    }
-
-    return proxyWebcam(c, webcamUrl, printerLabel, mode);
-});
-
-async function proxyWebcam(
-    c: Context,
-    rawUrl: string,
-    label: string,
-    mode: string | undefined,
-) {
-    let upstreamUrl = rawUrl;
-    if (mode === "snapshot" && upstreamUrl.includes("action=stream")) {
-        upstreamUrl = upstreamUrl.replace("action=stream", "action=snapshot");
-    }
-
-    // Abort upstream fetch on client disconnect or after 8 s timeout
-    const upstream = new AbortController();
-    let clientDisconnected = false;
-    c.req.raw.signal.addEventListener("abort", () => {
-        clientDisconnected = true;
-        upstream.abort();
-    });
-    const fetchTimeout = setTimeout(() => upstream.abort(), 8_000);
-
-    let upstreamRes: Response;
-    try {
-        upstreamRes = await fetch(upstreamUrl, {
-            signal: upstream.signal,
-            headers: { Accept: "*/*" },
-        });
-    } catch (error) {
-        clearTimeout(fetchTimeout);
-        if (error instanceof Error && error.name === "AbortError") {
-            if (clientDisconnected) return c.body(null, 499 as any);
-            throw new HTTPException(502, {
-                message: "Printer webcam timed out",
-            });
-        }
-        logger.error({ label, err: error }, "Webcam proxy failed");
-        throw new HTTPException(502, {
-            message: "Failed to connect to printer webcam",
-        });
-    }
-    clearTimeout(fetchTimeout);
-
-    if (!upstreamRes.ok) {
-        throw new HTTPException(502, {
-            message: `Printer webcam returned HTTP ${upstreamRes.status}`,
-        });
-    }
-
-    if (!upstreamRes.body) {
-        throw new HTTPException(502, {
-            message: "Printer webcam returned empty body",
-        });
-    }
-
-    // Forward content-type verbatim (critical for MJPEG multipart/x-mixed-replace)
-    const headers = new Headers();
-    const contentType = upstreamRes.headers.get("content-type");
-    if (contentType) headers.set("Content-Type", contentType);
-    const contentLength = upstreamRes.headers.get("content-length");
-    if (contentLength) headers.set("Content-Length", contentLength);
-    headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
-    headers.set("X-Accel-Buffering", "no");
-
-    return new Response(upstreamRes.body, { status: 200, headers });
-}
-
-// ─── BamBuddy MJPEG stream proxy ───────────────────────────────────────────
-// Proxies the BamBuddy MJPEG camera stream so clients can view it without
-// exposing the BamBuddy endpoint or API key to the browser.
-app.get("/api/bambu-stream/:bambuddyId", async (c) => {
-    if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
-    const session = await auth.api.getSession({ headers: c.req.raw.headers });
-    if (!session?.user?.id)
-        throw new HTTPException(401, { message: "Authentication required" });
-
-    const bambuddyId = Number(c.req.param("bambuddyId"));
-    if (!Number.isInteger(bambuddyId) || bambuddyId <= 0) {
-        throw new HTTPException(400, { message: "Invalid printer ID" });
-    }
-
-    const endpoint = process.env.BAMBUDDY_ENDPOINT?.replace(/\/$/, "");
-    const apiKey = process.env.BAMBUDDY_API_KEY;
-    if (!endpoint || !apiKey)
-        throw new HTTPException(503, { message: "BamBuddy not configured" });
-
-    // Get a short-lived stream token
-    let token: string;
-    try {
-        const tokenRes = await fetch(
-            `${endpoint}/api/v1/printers/camera/stream-token`,
-            {
-                method: "POST",
-                headers: { "X-API-Key": apiKey },
-                signal: AbortSignal.timeout(10_000),
-            },
-        );
-        if (!tokenRes.ok) throw new Error(`HTTP ${tokenRes.status}`);
-        const tokenData = (await tokenRes.json()) as { token?: string };
-        if (!tokenData.token) throw new Error("Missing token in response");
-        token = tokenData.token;
-    } catch (err) {
-        throw new HTTPException(502, {
-            message: `Failed to get stream token: ${err instanceof Error ? err.message : err}`,
-        });
-    }
-
-    const fps = Math.min(30, Math.max(1, Number(c.req.query("fps") ?? "15")));
-    const streamUrl = `${endpoint}/api/v1/printers/${bambuddyId}/camera/stream?token=${encodeURIComponent(token)}&fps=${fps}`;
-
-    const upstream = new AbortController();
-    let clientDisconnected = false;
-    c.req.raw.signal.addEventListener("abort", () => {
-        clientDisconnected = true;
-        upstream.abort();
-    });
-    const fetchTimeout = setTimeout(() => upstream.abort(), 10_000);
-
-    let upstreamRes: Response;
-    try {
-        upstreamRes = await fetch(streamUrl, { signal: upstream.signal });
-    } catch (err) {
-        clearTimeout(fetchTimeout);
-        if (err instanceof Error && err.name === "AbortError") {
-            if (clientDisconnected) return c.body(null, 499 as any);
-            throw new HTTPException(502, {
-                message: "BamBuddy stream timed out",
-            });
-        }
-        throw new HTTPException(502, {
-            message: "Failed to connect to BamBuddy stream",
-        });
-    }
-    clearTimeout(fetchTimeout);
-
-    if (!upstreamRes.ok || !upstreamRes.body) {
-        throw new HTTPException(502, {
-            message: `BamBuddy stream returned HTTP ${upstreamRes.status}`,
-        });
-    }
-
-    const resHeaders = new Headers();
-    const contentType = upstreamRes.headers.get("content-type");
-    if (contentType) resHeaders.set("Content-Type", contentType);
-    resHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
-    resHeaders.set("X-Accel-Buffering", "no");
-
-    return new Response(upstreamRes.body, { status: 200, headers: resHeaders });
-});
-
-// ─── BamBuddy thumbnail proxy ────────────────────────────────────────────────
-// Proxies print-log thumbnails through the server so clients don't need the API key.
-// Uses a stream token (?token=xxx) as required by the BamBuddy thumbnail endpoint.
-app.get("/api/bambu-thumbnail/:entryId", async (c) => {
-    if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
-    const session = await auth.api.getSession({ headers: c.req.raw.headers });
-    if (!session?.user?.id)
-        throw new HTTPException(401, { message: "Authentication required" });
-
-    const entryId = Number(c.req.param("entryId"));
-    if (!Number.isInteger(entryId) || entryId <= 0)
-        throw new HTTPException(400, { message: "Invalid entry ID" });
-
-    const endpoint = process.env.BAMBUDDY_ENDPOINT?.replace(/\/$/, "");
-    const apiKey = process.env.BAMBUDDY_API_KEY;
-    if (!endpoint || !apiKey)
-        throw new HTTPException(503, { message: "BamBuddy not configured" });
-
-    // Get a stream token (required for thumbnail auth)
-    let token: string | null = null;
-    try {
-        const tokenRes = await fetch(
-            `${endpoint}/api/v1/printers/camera/stream-token`,
-            {
-                method: "POST",
-                headers: { "X-API-Key": apiKey },
-                signal: AbortSignal.timeout(8_000),
-            },
-        );
-        if (tokenRes.ok) {
-            const tokenData = (await tokenRes.json()) as { token?: string };
-            token = tokenData.token ?? null;
-        }
-    } catch {
-        // Fall through and try without token (may work if auth disabled)
-    }
-
-    const url = token
-        ? `${endpoint}/api/v1/print-log/${entryId}/thumbnail?token=${encodeURIComponent(token)}`
-        : `${endpoint}/api/v1/print-log/${entryId}/thumbnail`;
-
-    let upstreamRes: Response;
-    try {
-        upstreamRes = await fetch(url, {
-            headers: { "X-API-Key": apiKey },
-            signal: AbortSignal.timeout(10_000),
-        });
-    } catch (err) {
-        throw new HTTPException(502, { message: "Failed to fetch thumbnail" });
-    }
-
-    if (!upstreamRes.ok)
-        throw new HTTPException(upstreamRes.status as 400, {
-            message: `BamBuddy thumbnail returned ${upstreamRes.status}`,
-        });
-
-    const contentType =
-        upstreamRes.headers.get("content-type") ?? "image/png";
-    const buffer = await upstreamRes.arrayBuffer();
-    return new Response(buffer, {
-        status: 200,
-        headers: {
-            "Content-Type": contentType,
-            "Cache-Control": "public, max-age=3600",
-        },
-    });
-});
-
-// ─── BamBuddy stats export proxy ─────────────────────────────────────────────
-app.get("/api/bambu-stats-export", async (c) => {
-    if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
-    const session = await auth.api.getSession({ headers: c.req.raw.headers });
-    if (!session?.user?.id)
-        throw new HTTPException(401, { message: "Authentication required" });
-
-    const endpoint = process.env.BAMBUDDY_ENDPOINT?.replace(/\/$/, "");
-    const apiKey = process.env.BAMBUDDY_API_KEY;
-    if (!endpoint || !apiKey)
-        throw new HTTPException(503, { message: "BamBuddy not configured" });
-
-    const format = c.req.query("format") === "xlsx" ? "xlsx" : "csv";
-    const days = Math.min(3650, Math.max(1, Number(c.req.query("days") ?? "30")));
-
-    const url = `${endpoint}/api/v1/archives/stats/export?format=${format}&days=${days}`;
-    let upstreamRes: Response;
-    try {
-        upstreamRes = await fetch(url, {
-            headers: { "X-API-Key": apiKey },
-            signal: AbortSignal.timeout(30_000),
-        });
-    } catch (err) {
-        throw new HTTPException(502, { message: "Failed to fetch export" });
-    }
-
-    if (!upstreamRes.ok)
-        throw new HTTPException(upstreamRes.status as 400, {
-            message: `BamBuddy export returned ${upstreamRes.status}`,
-        });
-
-    const contentType =
-        upstreamRes.headers.get("content-type") ??
-        (format === "xlsx"
-            ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            : "text/csv");
-    const buffer = await upstreamRes.arrayBuffer();
-    return new Response(buffer, {
-        status: 200,
-        headers: {
-            "Content-Type": contentType,
-            "Content-Disposition": `attachment; filename="print-stats.${format}"`,
-        },
-    });
-});
-
-// ─── 3MF file upload to BamBuddy (async to avoid Cloudflare's 100s timeout) ──
-app.post("/api/print-queue/upload-3mf", async (c) => {
-    if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
-    const session = await auth.api.getSession({ headers: c.req.raw.headers });
-    if (!session?.user?.id)
-        throw new HTTPException(401, { message: "Authentication required" });
-
-    const formData = await c.req.formData();
-    const file = formData.get("file");
-    if (!(file instanceof File))
-        throw new HTTPException(400, { message: "Missing file field" });
-
-    const lower = file.name.toLowerCase();
-    if (lower.endsWith(".gcode"))
-        throw new HTTPException(400, {
-            message: "Plain .gcode files are not accepted — export as .gcode.3mf instead",
-        });
-    if (!lower.endsWith(".gcode.3mf"))
-        throw new HTTPException(400, { message: "Only .gcode.3mf files are accepted" });
-
-    const MAX_3MF_BYTES = 500 * 1024 * 1024;
-    const bytes = await file.arrayBuffer();
-    if (bytes.byteLength > MAX_3MF_BYTES)
-        throw new HTTPException(413, { message: "File exceeds 500 MB limit" });
-
-    const projectNameField = formData.get("projectName");
-    const personalUseField = formData.get("personalUse");
-    const projectName =
-        personalUseField === "true" || typeof projectNameField !== "string" || !projectNameField.trim()
-            ? "Personal"
-            : projectNameField;
-
-    const jobId = crypto.randomUUID();
-    const buffer = Buffer.from(bytes);
-    const filename = await resolveUniqueFilename(
-        buildPrintUploadFilename(session.user.name, projectName, file.name),
-        async (candidate) => {
-            const matches = await searchBambuddyArchives(candidate);
-            return matches.some((a) => a.filename === candidate);
-        },
-    );
-
-    uploadJobs.set(jobId, { status: "pending", progress: 0 });
-    expireUploadJob(jobId);
-
-    // Fire-and-forget: upload runs after we've already responded to the client.
-    Promise.resolve().then(async () => {
-        try {
-            const archiveId = await uploadBambuddyArchive(
-                filename,
-                buffer,
-                (sent, total) => {
-                    uploadJobs.set(jobId, {
-                        status: "pending",
-                        progress: total > 0 ? sent / total : 0,
-                    });
-                },
-            );
-            uploadJobs.set(jobId, { status: "completed", archiveId });
-        } catch (err) {
-            logger.error({ err, jobId }, "Failed to upload 3MF to BamBuddy");
-            uploadJobs.set(jobId, {
-                status: "failed",
-                error: err instanceof Error ? err.message : String(err),
-            });
-        }
-    });
-
-    return c.json({ jobId }, 202);
-});
-
-// ─── 3MF upload status polling ────────────────────────────────────────────────
-app.get("/api/print-queue/upload-status/:jobId", async (c) => {
-    if (!printingEnabled) return c.json({ error: "Printing system is disabled" }, 503);
-    const session = await auth.api.getSession({ headers: c.req.raw.headers });
-    if (!session?.user?.id)
-        throw new HTTPException(401, { message: "Authentication required" });
-
-    const jobId = c.req.param("jobId");
-    const job = uploadJobs.get(jobId);
-    if (!job)
-        throw new HTTPException(404, { message: "Upload job not found" });
-
-    return c.json(job);
-});
-
 // ─── Tamarin SDK routes (Notion + Discord) ───────────────────────────────────
 mountTamarinRoutes(app);
 
@@ -966,7 +508,7 @@ app.all("/mcp", async (c) => {
 
 // ─── Metrics endpoint ─────────────────────────────────────────────────────────
 // Prometheus-compatible metrics endpoint. Enable via METRICS_ENABLED=true.
-// Natively scrapes Prusa REST API, caches Bambu MQTT data, and queries Prisma.
+// Natively queries Prisma.
 const metricsEnabled = process.env.METRICS_ENABLED === "true";
 if (metricsEnabled) {
     const metricsUsername = process.env.METRICS_USERNAME;
@@ -998,32 +540,6 @@ if (metricsEnabled) {
             });
         }
     });
-}
-
-// ─── Start BamBuddy API polling for Prometheus metrics ─────────────────────
-// Always start the legacy poller when enabled — we may prefer the Prometheus
-// endpoint but fall back to the legacy cache if the passthrough fails.
-if (metricsEnabled && printingEnabled && process.env.METRICS_BAMBU_ENABLED !== "false") {
-    initBambuMetricsListener();
-}
-
-// ─── PrintCam poller + initial Bambu DB sync ─────────────────────────────────
-// Sync Bambu printers from BamBuddy into local DB immediately on startup so
-// they appear in getPrinters / getLivePrinterStatuses before the first poller
-// cycle fires. Re-sync every 5 minutes to pick up newly registered printers.
-if (printingEnabled) {
-    syncBambuPrinters().catch((err) =>
-        logger.error({ err }, "Bambu printer sync failed on startup"),
-    );
-    setInterval(
-        () =>
-            syncBambuPrinters().catch((err) =>
-                logger.error({ err }, "Bambu printer sync failed"),
-            ),
-        5 * 60 * 1000,
-    );
-    initPrintCamPoller();
-    initPrintQueuePoller();
 }
 
 export default {

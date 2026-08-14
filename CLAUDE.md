@@ -22,7 +22,6 @@ bunx prisma migrate dev    # Apply migrations and regenerate client
 bunx prisma db push        # Push schema changes without migration file
 bunx prisma studio         # Open Prisma Studio
 bun run generate           # Seed sample data
-bun run seed:printers      # Seed printer config
 ```
 
 **Running a single test:**
@@ -68,7 +67,6 @@ Four tRPC procedure tiers in `src/server/trpc.ts`:
 | Asset management | `item`, `consumable`, `tag`, `location` |
 | Users & groups | `user`, `group` |
 | Transactions | `itemRecord`, `consumableRequest`, `auditLog` |
-| Printing | `print`, `printQueue`, `printStats` + `src/server/lib/` (Bambu, Prusa) |
 | AI chat | `chat` (LangChain + Ollama) |
 | Notifications | `notification` |
 | Kiosk | `kiosk` + `src/contexts/KioskContext.tsx` |
@@ -87,7 +85,6 @@ Four tRPC procedure tiers in `src/server/trpc.ts`:
 - **PostgreSQL** on port 5435 (Docker), managed by Prisma
 - **MinIO** on ports 9000/9001 — S3-compatible object storage for images and G-code files
 - **Ollama** — local LLM for AI chat feature
-- **Bambuddy** — external service for Bambu Lab printer queue management
 - Docker Compose runs postgres + minio; the app itself runs locally via `bun run dev`
 
 ### Environment

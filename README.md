@@ -16,8 +16,6 @@ A modern, full-stack inventory management system built with React, TypeScript, t
 - **Dashboard**: Visual analytics with charts and statistics
 - **AI Chat Assistant**: Integrated chat interface powered by LangChain and Ollama
 - **Dark Mode**: Automatic theme switching based on system preferences
-- **G-code Printing**: Upload, hash, archive, and dispatch G-code jobs to configured Prusa/Bambu printers by IP
-- **Print Validation & Audit**: Enforces G-code extension/size checks and stores per-user print job statuses
 
 ## Tech Stack
 
@@ -94,9 +92,6 @@ MCP_PASSWORD="your-secure-password-here"
 
 # Better Auth (add your auth configuration)
 # See Better Auth documentation for required variables
-
-# Optional: Bambu dispatch bridge webhook (required for BAMBU printer type dispatch)
-BAMBU_BRIDGE_URL="http://localhost:8081/bambu/dispatch"
 
 # Optional: Prometheus metrics endpoint (/metrics)
 METRICS_ENABLED=true

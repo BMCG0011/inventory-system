@@ -95,13 +95,3 @@ export const getByUuid = async (id: string) => {
     });
   }
 };
-
-export type PrintResponse =
-  | {
-      ok: true;
-      itemId: string;
-    }
-  | {
-      ok: false;
-      error: string;
-    };
