@@ -29,7 +29,6 @@ import KioskCheckin from "@/pages/kiosk/KioskCheckin";
 import KioskProvision from "@/pages/kiosk/KioskProvision";
 import { KioskGuardLayout } from "@/pages/kiosk/KioskGuardLayout";
 
-
 const App = () => {
   React.useEffect(() => {
     // On mount, apply theme based on localStorage or system preference
