@@ -31,7 +31,7 @@ export const auth = betterAuth({
     admin(),
   ],
   emailAndPassword: {
-    enabled: false,
+    enabled: process.env.NODE_ENV == "development",
   },
   // TO HAVE AN EMAIL WHITELIST
   // databaseHooks: {
