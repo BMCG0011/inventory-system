@@ -19,7 +19,7 @@ export const qrRouter = router({
     .query(async ({ input }) => {
       //TODO: Make this generate location qr codes
       const item = await prisma.item.findUnique({ where: { id: input.id } });
-      if (item) return `${getBaseUrl()}qr/${item.id}`;
+      if (item) return new URL(`qr/${item.id}`, getBaseUrl()).toString();
       else
         return {
           ok: false as const,
