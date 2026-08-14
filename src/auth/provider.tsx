@@ -9,7 +9,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthUIProvider
       authClient={authClient}
       navigate={void navigate}
-      credentials={false}
+      credentials={import.meta.env.DEV}
       providers={["github"]}
       Link={
         NavLink as unknown as React.FC<{
