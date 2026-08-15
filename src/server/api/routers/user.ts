@@ -2,14 +2,8 @@ import { router, adminProcedure, userProcedure } from "@/server/trpc";
 import { prisma } from "@/server/lib/prisma";
 import { z } from "zod";
 import { userInput, userUpdateInput } from "@/server/schema/user.schema";
-import {
-  syncAllMembers,
-  syncOneMember,
-  getMemberSyncStatus,
-} from "@/server/lib/member-sync";
 import { getBaseUrl } from "@/lib/utils";
 import { buildAvatarKey, deleteFile, fileExists } from "@/server/lib/s3";
-import { checkDiscordGuildMember } from "@/server/lib/external-api";
 
 export const userRouter = router({
   create: adminProcedure.input(userInput).mutation(async ({ input }) => {
@@ -84,8 +78,6 @@ export const userRouter = router({
         banned: true,
         banReason: true,
         banExpires: true,
-        studentNumber: true,
-        discordId: true,
         group: { select: { id: true, name: true } },
         sessions: {
           orderBy: { updatedAt: "desc" },
@@ -145,20 +137,6 @@ export const userRouter = router({
       });
     }),
 
-  memberSyncStatus: adminProcedure.query(() => {
-    return getMemberSyncStatus();
-  }),
-
-  syncAllMembers: adminProcedure.mutation(async () => {
-    return syncAllMembers();
-  }),
-
-  syncOneMember: adminProcedure
-    .input(z.object({ userId: z.string() }))
-    .mutation(async ({ input }) => {
-      return syncOneMember(input.userId);
-    }),
-
   removeAvatar: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
@@ -186,17 +164,5 @@ export const userRouter = router({
         where: { id: ctx.user.id },
         data: { lastSeenVersion: input.version },
       });
-    }),
-
-  validateDiscordIds: adminProcedure
-    .input(z.object({ discordIds: z.array(z.string()).max(100) }))
-    .query(async ({ input }) => {
-      const results = await Promise.all(
-        input.discordIds.map(async (id) => ({
-          id,
-          valid: await checkDiscordGuildMember(id),
-        })),
-      );
-      return Object.fromEntries(results.map((r) => [r.id, r.valid]));
     }),
 });
