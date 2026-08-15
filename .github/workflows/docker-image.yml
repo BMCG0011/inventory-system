@@ -32,6 +32,9 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
           provenance: true
           sbom: true
+          platform:
+            - linux/amd64
+            - linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
