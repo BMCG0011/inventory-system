@@ -10,17 +10,11 @@ import {
   ShoppingCartIcon,
   ArrowRightToLine,
   MessageCircle,
-  Printer,
-  Monitor,
-  Wrench,
   ClipboardList,
   FileText,
   ScrollText,
   Users,
   ChevronDown,
-  ListOrdered,
-  BarChart2,
-  History,
 } from "lucide-react";
 import { authClient } from "@/auth/client";
 import { trpc } from "@/client/trpc";
@@ -40,8 +34,6 @@ import { ThemeToggle } from "@/components/sidebar/theme-toggle";
 import { useCart } from "@/contexts/cart-context";
 import { cn } from "@/lib/utils";
 
-const printingEnabled = import.meta.env.VITE_PRINTING_ENABLED !== "false";
-
 const coreItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Assets", url: "/assets", icon: Box },
@@ -50,17 +42,7 @@ const coreItems = [
   { title: "Chat", url: "/chat", icon: MessageCircle },
 ];
 
-const printingItems = [
-  { title: "Print", url: "/print", icon: Printer },
-  { title: "Queue", url: "/print-queue", icon: ListOrdered },
-  { title: "Monitor", url: "/print-monitor", icon: Monitor },
-  { title: "Stats", url: "/print-stats", icon: BarChart2 },
-  { title: "History", url: "/print-history", icon: History },
-  { title: "Printers", url: "/printer-management", icon: Wrench },
-];
-
 export function AppSidebar() {
-  const [printingOpen, setPrintingOpen] = useState(true);
   const [adminOpen, setAdminOpen] = useState(false);
   const { itemCount } = useCart();
   const navigate = useNavigate();
@@ -125,38 +107,6 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
-
-              {/* Printing group */}
-              {printingEnabled && (
-                <div className="mt-2">
-                  <button
-                    onClick={() => setPrintingOpen((o) => !o)}
-                    className="flex w-full items-center justify-between px-2 py-1 text-xs font-medium text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
-                  >
-                    <span className="uppercase tracking-wider">Printing</span>
-                    <ChevronDown
-                      className={cn(
-                        "h-3 w-3 transition-transform duration-200",
-                        !printingOpen && "-rotate-90",
-                      )}
-                    />
-                  </button>
-                  {printingOpen && (
-                    <SidebarMenu className="mt-0.5">
-                      {printingItems.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild>
-                            <a onClick={() => void navigate(item.url)}>
-                              <item.icon />
-                              <span>{item.title}</span>
-                            </a>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  )}
-                </div>
-              )}
 
               {/* Administration group — admins only */}
               {isAdmin && (

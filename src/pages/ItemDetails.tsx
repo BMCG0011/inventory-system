@@ -13,7 +13,6 @@ import RestockForm from "@/components/item-crud/RestockForm";
 import { AdminAssignCard } from "@/components/item-crud/AdminAssignCard";
 import { AdminRevokeCard } from "@/components/item-crud/AdminRevokeCard";
 import { authClient } from "@/auth/client";
-import { PrintButton } from "@/components/print-label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -392,8 +391,6 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
               </p>
             </CardContent>
           </Card>
-
-          <PrintButton itemId={itemId} />
 
           {session?.user.role === "admin" && data.consumable && (
             <Card>

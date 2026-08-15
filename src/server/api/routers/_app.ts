@@ -11,14 +11,11 @@ import { dashboardRouter } from "./dashboardRouter";
 import { qrRouter } from "./qr";
 import z from "zod";
 import { chatRouter } from "./chat";
-import { printRouter } from "./print";
 import { userRouter } from "./user";
 import { kioskRouter } from "./kiosk";
 import { notificationRouter } from "./notification";
 import { auditLogRouter } from "./auditLog";
 import { statusRouter } from "./status";
-import { printQueueRouter } from "./printQueue";
-import { printStatsRouter } from "./printStats";
 
 export const appRouter = router({
   group: groupRouter,
@@ -32,13 +29,10 @@ export const appRouter = router({
   dashboard: dashboardRouter,
   qr: qrRouter,
   chat: chatRouter,
-  print: printRouter,
   kiosk: kioskRouter,
   notification: notificationRouter,
   auditLog: auditLogRouter,
   status: statusRouter,
-  printQueue: printQueueRouter,
-  printStats: printStatsRouter,
   hello: userProcedure.query(() => {
     return "hello world";
   }),
