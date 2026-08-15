@@ -32,11 +32,9 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
           provenance: true
           sbom: true
-          platform:
-            - linux/amd64
-            - linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
             VITE_KIOSK_SECRET=${{ secrets.VITE_KIOSK_SECRET }}
             VITE_PRINTING_ENABLED=${{ vars.VITE_PRINTING_ENABLED || 'true' }}
+            TARGETPLATFORM=linux/amd64,linux/arm64
