@@ -138,61 +138,29 @@ export function AppSidebar() {
 
               {/* Printing group */}
               {printingEnabled && (
-                <div className="mt-2">
-                  <button
-                    onClick={() => setPrintingOpen((o) => !o)}
-                    className="flex w-full items-center justify-between px-2 py-1 text-xs font-medium text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
-                  >
-                    <span className="uppercase tracking-wider">Printing</span>
-                    <ChevronDown
-                      className={cn(
-                        "h-3 w-3 transition-transform duration-200",
-                        !printingOpen && "-rotate-90",
-                      )}
-                    />
-                  </button>
-                  {printingOpen && (
-                    <SidebarMenu className="mt-0.5">
-                      {printingItems.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild>
-                            <a
-                              onClick={(event) => (
-                                event.preventDefault(),
-                                void navigate(item.url)
-                              )}
-                              href="#"
-                            >
-                              <item.icon />
-                              <span>{item.title}</span>
-                            </a>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  )}
-                </div>
+                <SidebarMenu className="mt-0.5" collapsible={true} label="Printing">
+                  {printingItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <a
+                          onClick={(event) => (
+                            event.preventDefault(),
+                            void navigate(item.url)
+                          )}
+                          href="#"
+                        >
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </a>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
               )}
 
               {/* Administration group — admins only */}
               {isAdmin && (
-                <div className="mt-2">
-                  <button
-                    onClick={() => setAdminOpen((o) => !o)}
-                    className="flex w-full items-center justify-between px-2 py-1 text-xs font-medium text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
-                  >
-                    <span className="uppercase tracking-wider">
-                      Administration
-                    </span>
-                    <ChevronDown
-                      className={cn(
-                        "h-3 w-3 transition-transform duration-200",
-                        !adminOpen && "-rotate-90",
-                      )}
-                    />
-                  </button>
-                  {adminOpen && (
-                    <SidebarMenu className="mt-0.5">
+                    <SidebarMenu collapsible={true} label="Administration">
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild>
                           <a
@@ -230,8 +198,6 @@ export function AppSidebar() {
                       </SidebarMenuItem>
                     </SidebarMenu>
                   )}
-                </div>
-              )}
 
               <SidebarMenu className="mt-2">
                 <SidebarMenuItem>

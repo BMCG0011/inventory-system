@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
+import { PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDown } from "lucide-react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -453,14 +453,45 @@ function SidebarGroupContent({
   );
 }
 
-function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
+function SidebarMenu({ className, collapsible, label, ...props }: React.ComponentProps<"ul"> & {collapsible?: boolean; label?: string}) {
+  const [isOpen, setIsOpen] = React.useState(true)
+  
+  const labelCn = "flex w-full items-center justify-between px-2 py-1 text-xs font-medium text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors";
+
   return (
-    <ul
-      data-slot="sidebar-menu"
-      data-sidebar="menu"
-      className={cn("flex w-full min-w-0 flex-col gap-1", className)}
-      {...props}
-    />
+    <div className="mt-2">
+      {label && 
+      (collapsible ? (
+        <button
+          onClick={() => setIsOpen((o) => !o)}
+          className={cn(labelCn, "cursor-pointer")}
+          aria-expanded={isOpen}
+        >
+          <span className="uppercase tracking-wider">
+            {label}
+          </span>
+          <ChevronDown
+            className={cn(
+              "h-3 w-3 transition-transform duration-200",
+              !isOpen && "-rotate-90",
+            )}
+          />
+        </button>
+      ) : (
+        <div className={labelCn}>
+          <span className="uppercase tracking-wider">
+            {label}
+          </span>
+        </div>
+      ))}
+      {(isOpen || !label || !collapsible) && 
+        <ul
+          data-slot="sidebar-menu"
+          data-sidebar="menu"
+          className={cn("flex w-full min-w-0 flex-col gap-1", className, collapsible && label ? "pl-3" : "")}
+          {...props}
+        /> }
+    </div>
   );
 }
 
