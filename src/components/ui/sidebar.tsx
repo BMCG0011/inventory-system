@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { PanelLeftIcon } from "lucide-react";
+import { PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -211,6 +211,8 @@ function Sidebar({
       data-variant={variant}
       data-side={side}
       data-slot="sidebar"
+      id="sidebar"
+      inert={state === "collapsed"}
     >
       {/* This is what handles the sidebar gap on desktop */}
       <div
@@ -256,7 +258,8 @@ function SidebarTrigger({
   onClick,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, open } = useSidebar();
+  
 
   return (
     <Button
@@ -269,9 +272,15 @@ function SidebarTrigger({
         onClick?.(event);
         toggleSidebar();
       }}
+      aria-expanded={open}
+      aria-controls="sidebar"
       {...props}
     >
-      <PanelLeftIcon />
+      {open ? (
+        <PanelLeftCloseIcon />
+      ) : (
+        <PanelLeftOpenIcon />
+      )}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

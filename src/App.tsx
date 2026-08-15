@@ -54,6 +54,7 @@ const App = () => {
       <AuthProvider>
         <CartProvider>
           <KioskProvider>
+            <a href="#main" className="sr-only focus:not-sr-only absolute focus:absolute top-0 left-0 bg-white text-black px-4 py-2 rounded-md z-50">Skip to main content</a>
             <Toaster position="top-right" richColors closeButton />
             <Routes>
               <Route path="error" element={<ErrorPage />} />
@@ -105,7 +106,10 @@ const App = () => {
                 {printingEnabled && (
                   <>
                     <Route path="/print" element={<PrintGcode />} />
-                    <Route path="/print-monitor" element={<PrintMonitoring />} />
+                    <Route
+                      path="/print-monitor"
+                      element={<PrintMonitoring />}
+                    />
                     <Route path="/print-cam" element={<PrintCam />} />
                     <Route
                       path="/printer-management"
