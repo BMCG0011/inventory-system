@@ -259,7 +259,6 @@ function SidebarTrigger({
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { toggleSidebar, open } = useSidebar();
-  
 
   return (
     <Button
@@ -276,11 +275,7 @@ function SidebarTrigger({
       aria-controls="sidebar"
       {...props}
     >
-      {open ? (
-        <PanelLeftCloseIcon />
-      ) : (
-        <PanelLeftOpenIcon />
-      )}
+      {open ? <PanelLeftCloseIcon /> : <PanelLeftOpenIcon />}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );
