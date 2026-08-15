@@ -100,7 +100,13 @@ export function AppSidebar() {
                 {coreItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a onClick={() => void navigate(item.url)}>
+                      <a
+                        onClick={(event) => (
+                          event.preventDefault(),
+                          void navigate(item.url)
+                        )}
+                        href="#"
+                      >
                         <item.icon />
                         <span>{item.title}</span>
                       </a>
@@ -111,7 +117,11 @@ export function AppSidebar() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <a
-                      onClick={() => void navigate("/my-requests")}
+                      onClick={(event) => (
+                        event.preventDefault(),
+                        void navigate("/my-requests")
+                      )}
+                      href="#"
                       className="flex items-center gap-2"
                     >
                       <FileText />
@@ -146,7 +156,13 @@ export function AppSidebar() {
                       {printingItems.map((item) => (
                         <SidebarMenuItem key={item.title}>
                           <SidebarMenuButton asChild>
-                            <a onClick={() => void navigate(item.url)}>
+                            <a
+                              onClick={(event) => (
+                                event.preventDefault(),
+                                void navigate(item.url)
+                              )}
+                              href="#"
+                            >
                               <item.icon />
                               <span>{item.title}</span>
                             </a>
@@ -180,9 +196,11 @@ export function AppSidebar() {
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild>
                           <a
-                            onClick={() =>
+                            onClick={(event) => (
+                              event.preventDefault(),
                               void navigate("/consumables/requests")
-                            }
+                            )}
+                            href="#"
                             className="flex items-center gap-2"
                           >
                             <ClipboardList />
@@ -198,7 +216,11 @@ export function AppSidebar() {
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild>
                           <a
-                            onClick={() => void navigate("/members")}
+                            onClick={(event) => (
+                              event.preventDefault(),
+                              void navigate("/members")
+                            )}
+                            href="#"
                             className="flex items-center gap-2"
                           >
                             <Users />
@@ -214,7 +236,13 @@ export function AppSidebar() {
               <SidebarMenu className="mt-2">
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a onClick={() => void navigate("/settings")}>
+                    <a
+                      onClick={(event) => (
+                        event.preventDefault(),
+                        void navigate("/settings")
+                      )}
+                      href="#"
+                    >
                       <Settings />
                       <span>Settings</span>
                     </a>
@@ -227,7 +255,11 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <a
-                    onClick={() => void navigate("/cart")}
+                    onClick={(event) => (
+                      event.preventDefault(),
+                      void navigate("/cart")
+                    )}
+                    href="#"
                     className={cn(
                       "flex items-center gap-2 rounded-md transition-all",
                       itemCount > 0 &&
