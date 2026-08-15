@@ -58,14 +58,6 @@ services:
       OLLAMA_URL: ${OLLAMA_URL:-}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-}
       OLLAMA_AUTH_TOKEN: ${OLLAMA_AUTH_TOKEN:-}
-      # 3D printer integrations (optional)
-      BAMBUDDY_ENDPOINT: ${BAMBUDDY_ENDPOINT:-}
-      BAMBUDDY_API_KEY: ${BAMBUDDY_API_KEY:-}
-      PRINTER_URL: ${PRINTER_URL:-}
-      # Prometheus metrics (optional)
-      METRICS_ENABLED: ${METRICS_ENABLED:-false}
-      METRICS_USERNAME: ${METRICS_USERNAME:-}
-      METRICS_PASSWORD: ${METRICS_PASSWORD:-}
     healthcheck:
       # Check the Hono backend directly — vite preview does not expose /health
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
