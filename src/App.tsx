@@ -20,14 +20,6 @@ import ItemDetails from "@/pages/ItemDetails.tsx";
 import { ProtectedLayout } from "@/auth/ProtectedLayout.tsx";
 import CheckIn from "@/pages/CheckIn.tsx";
 import Chat from "./pages/Chat";
-import { KioskProvider } from "@/contexts/kiosk-context";
-import KioskLanding from "@/pages/kiosk/KioskLanding";
-import KioskHome from "@/pages/kiosk/KioskHome";
-import KioskAfterHours from "@/pages/kiosk/KioskAfterHours";
-import KioskCheckout from "@/pages/kiosk/KioskCheckout";
-import KioskCheckin from "@/pages/kiosk/KioskCheckin";
-import KioskProvision from "@/pages/kiosk/KioskProvision";
-import { KioskGuardLayout } from "@/pages/kiosk/KioskGuardLayout";
 
 const App = () => {
   React.useEffect(() => {
@@ -43,52 +35,39 @@ const App = () => {
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
-          <KioskProvider>
-            <Toaster position="top-right" richColors closeButton />
-            <Routes>
-              <Route path="error" element={<ErrorPage />} />
-              <Route path="/auth/:pathname" element={<AuthPage />} />
-              <Route path="/kiosk/provision" element={<KioskProvision />} />
-              <Route element={<KioskGuardLayout />}>
-                <Route path="/kiosk" element={<KioskLanding />} />
-                <Route path="/kiosk/home" element={<KioskHome />} />
-                <Route
-                  path="/kiosk/after-hours"
-                  element={<KioskAfterHours />}
-                />
-                <Route path="/kiosk/checkout" element={<KioskCheckout />} />
-                <Route path="/kiosk/checkin" element={<KioskCheckin />} />
-              </Route>
-              <Route path="/" element={<ProtectedLayout />}>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/activity" element={<Activity />} />
-                <Route
-                  path="/transactions"
-                  element={<Navigate to="/activity" replace />}
-                />
-                <Route
-                  path="/audit-log"
-                  element={<Navigate to="/activity" replace />}
-                />
-                <Route path="/assets/*" element={<Assets />} />
-                <Route
-                  path="/consumables/requests"
-                  element={<ConsumableRequests />}
-                />
-                <Route path="/consumables/*" element={<Consumables />} />
-                <Route path="/my-requests" element={<MyRequests />} />
-                <Route path="/audit-log" element={<AuditLog />} />
-                <Route path="/members" element={<Members />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/item/:id" element={<ItemDetails />} />
-                <Route path="/qr/*" element={<QR />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/chat" element={<Chat />} />
-                <Route path="/checkin" element={<CheckIn />} />
-              </Route>
-            </Routes>
-          </KioskProvider>
+          <Toaster position="top-right" richColors closeButton />
+          <Routes>
+            <Route path="error" element={<ErrorPage />} />
+            <Route path="/auth/:pathname" element={<AuthPage />} />
+            <Route path="/" element={<ProtectedLayout />}>
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/activity" element={<Activity />} />
+              <Route
+                path="/transactions"
+                element={<Navigate to="/activity" replace />}
+              />
+              <Route
+                path="/audit-log"
+                element={<Navigate to="/activity" replace />}
+              />
+              <Route path="/assets/*" element={<Assets />} />
+              <Route
+                path="/consumables/requests"
+                element={<ConsumableRequests />}
+              />
+              <Route path="/consumables/*" element={<Consumables />} />
+              <Route path="/my-requests" element={<MyRequests />} />
+              <Route path="/audit-log" element={<AuditLog />} />
+              <Route path="/members" element={<Members />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/item/:id" element={<ItemDetails />} />
+              <Route path="/qr/*" element={<QR />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/checkin" element={<CheckIn />} />
+            </Route>
+          </Routes>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

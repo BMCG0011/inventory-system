@@ -189,8 +189,6 @@ model User {
     banned           Boolean?
     banReason        String?
     banExpires       DateTime?
-    studentNumber    String?   @unique
-    discordId        String?
     lastSeenVersion  String?
 
     @@index([email])

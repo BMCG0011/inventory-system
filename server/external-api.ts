@@ -95,14 +95,14 @@ function requireFypToken(req: Request, requestId: string): void {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-async function resolveUserByStudentId(studentId: string) {
+async function resolveUserById(userId: string) {
     const user = await prisma.user.findUnique({
-        where: { studentNumber: studentId },
-        select: { id: true, name: true, email: true, studentNumber: true },
+        where: { id: userId },
+        select: { id: true, name: true, email: true },
     });
     if (!user) {
         throw new HTTPException(404, {
-            message: `No user found with student ID: ${studentId}`,
+            message: `No user found with ID: ${userId}`,
         });
     }
     return user;
@@ -231,34 +231,34 @@ export function mountExternalApiRoutes(app: Hono): void {
     });
 
     // ── POST /api/ext/assets/checkout ─────────────────────────────────────────
-    // Check out an asset to a student.
+    // Check out an asset to a user.
     //
     // Body (JSON):
-    //   studentId  string — student number
+    //   userId  string — user id
     //   serial     string — asset serial number
     //
-    // Success 200: { ok: true, serial, name, checkedOutTo: { name, studentNumber } }
+    // Success 200: { ok: true, serial, name, checkedOutTo: { name, userId } }
     // Errors: 400, 401, 404, 409 (already checked out)
     app.post("/api/ext/assets/checkout", async (c) => {
         const { requestId, start } = startRequest(c.req.raw);
         const path = "/api/ext/assets/checkout";
         requireFypToken(c.req.raw, requestId);
 
-        const body = await c.req.json<{ studentId?: string; serial?: string }>();
-        const studentId = body.studentId;
+        const body = await c.req.json<{ userId?: string; serial?: string }>();
+        const userId = body.userId;
         const serial = body.serial;
 
-        if (!studentId) {
-            logError(requestId, start, "POST", path, 400, "studentId is required");
-            throw new HTTPException(400, { message: "studentId is required" });
+        if (!userId) {
+            logError(requestId, start, "POST", path, 400, "userId is required");
+            throw new HTTPException(400, { message: "userId is required" });
         }
         if (!serial) {
             logError(requestId, start, "POST", path, 400, "serial is required");
             throw new HTTPException(400, { message: "serial is required" });
         }
 
-        logger.debug({ requestId, studentId, serial }, "ext-api checkout params");
-        const user = await resolveUserByStudentId(studentId);
+        logger.debug({ requestId, userId, serial }, "ext-api checkout params");
+        const user = await resolveUserById(userId);
 
         const item = await prisma.item.findUnique({
             where: { serial, deleted: false },
@@ -275,7 +275,7 @@ export function mountExternalApiRoutes(app: Hono): void {
             });
         }
 
-        logger.info({ requestId, serial, itemId: item.id, userId: user.id, studentId }, "ext-api checking out asset");
+        logger.info({ requestId, serial, itemId: item.id, userId: user.id }, "ext-api checking out asset");
         const result = await itemCheckout(
             user.id,
             [{ itemId: item.id, quantity: 1 }],
@@ -291,44 +291,44 @@ export function mountExternalApiRoutes(app: Hono): void {
             });
         }
 
-        logSuccess(requestId, start, "POST", path, { serial, itemId: item.id, userId: user.id, studentId });
+        logSuccess(requestId, start, "POST", path, { serial, itemId: item.id, userId: user.id });
         return c.json({
             ok: true,
             serial,
             name: item.name,
-            checkedOutTo: { name: user.name, studentNumber: user.studentNumber },
+            checkedOutTo: { name: user.name, userId: user.id },
         });
     });
 
     // ── POST /api/ext/assets/checkin ──────────────────────────────────────────
-    // Check in an asset from a student.
+    // Check in an asset from a user.
     //
     // Body (JSON):
-    //   studentId  string — student number
+    //   userId  string — user id
     //   serial     string — asset serial number
     //
-    // Success 200: { ok: true, serial, name, checkedInBy: { name, studentNumber } }
+    // Success 200: { ok: true, serial, name, checkedInBy: { name, userId } }
     // Errors: 400, 401, 404, 409 (already in storage)
     app.post("/api/ext/assets/checkin", async (c) => {
         const { requestId, start } = startRequest(c.req.raw);
         const path = "/api/ext/assets/checkin";
         requireFypToken(c.req.raw, requestId);
 
-        const body = await c.req.json<{ studentId?: string; serial?: string }>();
-        const studentId = body.studentId;
+        const body = await c.req.json<{ userId?: string; serial?: string }>();
+        const userId = body.userId;
         const serial = body.serial;
 
-        if (!studentId) {
-            logError(requestId, start, "POST", path, 400, "studentId is required");
-            throw new HTTPException(400, { message: "studentId is required" });
+        if (!userId) {
+            logError(requestId, start, "POST", path, 400, "userId is required");
+            throw new HTTPException(400, { message: "userId is required" });
         }
         if (!serial) {
             logError(requestId, start, "POST", path, 400, "serial is required");
             throw new HTTPException(400, { message: "serial is required" });
         }
 
-        logger.debug({ requestId, studentId, serial }, "ext-api checkin params");
-        const user = await resolveUserByStudentId(studentId);
+        logger.debug({ requestId, userId, serial }, "ext-api checkin params");
+        const user = await resolveUserById(userId);
 
         const item = await prisma.item.findUnique({
             where: { serial, deleted: false },
@@ -345,7 +345,7 @@ export function mountExternalApiRoutes(app: Hono): void {
             });
         }
 
-        logger.info({ requestId, serial, itemId: item.id, userId: user.id, studentId }, "ext-api checking in asset");
+        logger.info({ requestId, serial, itemId: item.id, userId: user.id }, "ext-api checking in asset");
         const result = await itemCheckin(
             user.id,
             [{ itemId: item.id, quantity: 1 }],
@@ -361,12 +361,12 @@ export function mountExternalApiRoutes(app: Hono): void {
             });
         }
 
-        logSuccess(requestId, start, "POST", path, { serial, itemId: item.id, userId: user.id, studentId });
+        logSuccess(requestId, start, "POST", path, { serial, itemId: item.id, userId: user.id });
         return c.json({
             ok: true,
             serial,
             name: item.name,
-            checkedInBy: { name: user.name, studentNumber: user.studentNumber },
+            checkedInBy: { name: user.name, userId: user.id },
         });
     });
 }

@@ -203,7 +203,7 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <div className="flex justify-between mr-2 mt-3 items-center">
-                <SidebarGroupLabel>Operation Tamarin</SidebarGroupLabel>
+                <SidebarGroupLabel></SidebarGroupLabel>
                 <div className="flex items-center gap-1">
                   <NotificationBell />
                   <ThemeToggle />

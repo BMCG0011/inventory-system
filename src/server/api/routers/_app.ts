@@ -12,7 +12,6 @@ import { qrRouter } from "./qr";
 import z from "zod";
 import { chatRouter } from "./chat";
 import { userRouter } from "./user";
-import { kioskRouter } from "./kiosk";
 import { notificationRouter } from "./notification";
 import { auditLogRouter } from "./auditLog";
 import { statusRouter } from "./status";
@@ -29,7 +28,6 @@ export const appRouter = router({
   dashboard: dashboardRouter,
   qr: qrRouter,
   chat: chatRouter,
-  kiosk: kioskRouter,
   notification: notificationRouter,
   auditLog: auditLogRouter,
   status: statusRouter,

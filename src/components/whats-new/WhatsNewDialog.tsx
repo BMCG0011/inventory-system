@@ -96,10 +96,6 @@ const CHANGELOG: VersionEntry[] = [
       },
       {
         type: "new",
-        text: "Member data caching — member and Discord details are cached and automatically refreshed from Notion every hour, making the members page significantly faster.",
-      },
-      {
-        type: "new",
         text: "Profile photos — your avatar now appears across all pages including the print queue and members list.",
       },
     ],
