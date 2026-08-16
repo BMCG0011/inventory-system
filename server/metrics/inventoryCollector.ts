@@ -2,7 +2,7 @@
 // Queries Prisma for inventory statistics and emits Prometheus gauges.
 
 import { prisma } from "@/server/lib/prisma";
-import { formatGauge, formatGaugeSingle } from "./format";
+import { formatGaugeSingle } from "./format";
 
 export async function collectInventoryMetrics(): Promise<string> {
   const [
@@ -16,8 +16,6 @@ export async function collectInventoryMetrics(): Promise<string> {
     usersBanned,
     groupsTotal,
     recordsTotal,
-    printersByType,
-    jobsByStatus,
   ] = await Promise.all([
     prisma.item.count({ where: { deleted: false } }),
     prisma.item.count({ where: { deleted: false, stored: true } }),
@@ -29,11 +27,6 @@ export async function collectInventoryMetrics(): Promise<string> {
     prisma.user.count({ where: { banned: true } }),
     prisma.group.count(),
     prisma.itemRecord.count(),
-    prisma.printer.groupBy({ by: ["type"], _count: { _all: true } }),
-    prisma.gcodePrintJob.groupBy({
-      by: ["status"],
-      _count: { _all: true },
-    }),
   ]);
 
   const lines: string[] = [];
@@ -113,32 +106,6 @@ export async function collectInventoryMetrics(): Promise<string> {
       "inventory_records_total",
       "Total number of item transaction records",
       recordsTotal,
-    ),
-  );
-
-  // Printers by type — single HELP/TYPE header, multiple samples
-  const printerTypes = ["PRUSA", "BAMBU"] as const;
-  lines.push(
-    formatGauge(
-      "inventory_printers_total",
-      "Total number of registered printers",
-      printerTypes.map((type) => ({
-        value: printersByType.find((p) => p.type === type)?._count._all ?? 0,
-        labels: { type },
-      })),
-    ),
-  );
-
-  // Print jobs by status — single HELP/TYPE header, multiple samples
-  const jobStatuses = ["STORED", "DISPATCHED", "DISPATCH_FAILED"] as const;
-  lines.push(
-    formatGauge(
-      "inventory_print_jobs_total",
-      "Total number of gcode print jobs",
-      jobStatuses.map((status) => ({
-        value: jobsByStatus.find((j) => j.status === status)?._count._all ?? 0,
-        labels: { status },
-      })),
     ),
   );
 

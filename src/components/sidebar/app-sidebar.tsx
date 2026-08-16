@@ -10,17 +10,11 @@ import {
   ShoppingCartIcon,
   ArrowRightToLine,
   MessageCircle,
-  Printer,
-  Monitor,
-  Wrench,
   ClipboardList,
   FileText,
   ScrollText,
   Users,
   ChevronDown,
-  ListOrdered,
-  BarChart2,
-  History,
 } from "lucide-react";
 import { authClient } from "@/auth/client";
 import { trpc } from "@/client/trpc";
@@ -40,8 +34,6 @@ import { ThemeToggle } from "@/components/sidebar/theme-toggle";
 import { useCart } from "@/contexts/cart-context";
 import { cn } from "@/lib/utils";
 
-const printingEnabled = import.meta.env.VITE_PRINTING_ENABLED !== "false";
-
 const coreItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Assets", url: "/assets", icon: Box },
@@ -50,17 +42,7 @@ const coreItems = [
   { title: "Chat", url: "/chat", icon: MessageCircle },
 ];
 
-const printingItems = [
-  { title: "Print", url: "/print", icon: Printer },
-  { title: "Queue", url: "/print-queue", icon: ListOrdered },
-  { title: "Monitor", url: "/print-monitor", icon: Monitor },
-  { title: "Stats", url: "/print-stats", icon: BarChart2 },
-  { title: "History", url: "/print-history", icon: History },
-  { title: "Printers", url: "/printer-management", icon: Wrench },
-];
-
 export function AppSidebar() {
-  const [printingOpen, setPrintingOpen] = useState(true);
   const [adminOpen, setAdminOpen] = useState(false);
   const { itemCount } = useCart();
   const navigate = useNavigate();
@@ -135,28 +117,6 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
-
-              {/* Printing group */}
-              {printingEnabled && (
-                <SidebarMenu className="mt-0.5" collapsible={true} label="Printing">
-                  {printingItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        <a
-                          onClick={(event) => (
-                            event.preventDefault(),
-                            void navigate(item.url)
-                          )}
-                          href="#"
-                        >
-                          <item.icon />
-                          <span>{item.title}</span>
-                        </a>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              )}
 
               {/* Administration group — admins only */}
               {isAdmin && (
@@ -251,7 +211,7 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <div className="flex justify-between mr-2 mt-3 items-center">
-                <SidebarGroupLabel>Operation Tamarin</SidebarGroupLabel>
+                <SidebarGroupLabel></SidebarGroupLabel>
                 <div className="flex items-center gap-1">
                   <NotificationBell />
                   <ThemeToggle />

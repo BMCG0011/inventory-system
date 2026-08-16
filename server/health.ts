@@ -48,91 +48,6 @@ async function checkDatabase(): Promise<ComponentResult> {
     }
 }
 
-async function checkBambBuddy(): Promise<ComponentResult> {
-    const endpoint = process.env.BAMBUDDY_ENDPOINT?.replace(/\/$/, "");
-    const apiKey = process.env.BAMBUDDY_API_KEY;
-
-    if (!endpoint || !apiKey) {
-        return {
-            id: "bambuddy",
-            name: "BamBuddy",
-            status: "degraded_performance",
-            group: false,
-            description: "Not configured",
-        };
-    }
-
-    try {
-        const res = await withTimeout(
-            fetch(`${endpoint}/health`, {
-                signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
-            }),
-            CHECK_TIMEOUT_MS,
-        );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const body = (await res.json()) as { status?: string };
-        if (body.status !== "healthy") throw new Error(`status=${body.status}`);
-        return {
-            id: "bambuddy",
-            name: "BambBuddy",
-            status: "operational",
-            group: false,
-            description: "",
-        };
-    } catch {
-        return {
-            id: "bambuddy",
-            name: "BambBuddy",
-            status: "major_outage",
-            group: false,
-            description: "Unreachable",
-        };
-    }
-}
-
-async function checkNotion(): Promise<ComponentResult> {
-    const token = process.env.NOTION_TOKEN;
-
-    if (!token) {
-        return {
-            id: "notion",
-            name: "Notion",
-            status: "degraded_performance",
-            group: false,
-            description: "Not configured",
-        };
-    }
-
-    try {
-        const res = await withTimeout(
-            fetch("https://api.notion.com/v1/users/me", {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Notion-Version": "2022-06-28",
-                },
-                signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
-            }),
-            CHECK_TIMEOUT_MS,
-        );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return {
-            id: "notion",
-            name: "Notion",
-            status: "operational",
-            group: false,
-            description: "",
-        };
-    } catch {
-        return {
-            id: "notion",
-            name: "Notion",
-            status: "major_outage",
-            group: false,
-            description: "Unreachable",
-        };
-    }
-}
-
 async function checkS3(): Promise<ComponentResult> {
     const endpoint = process.env.S3_ENDPOINT ?? "http://localhost:9000";
 
@@ -188,8 +103,6 @@ function deriveIndicator(components: ComponentResult[]): {
 async function runChecks(): Promise<ComponentResult[]> {
     return Promise.all([
         checkDatabase(),
-        checkBambBuddy(),
-        checkNotion(),
         checkS3(),
     ]);
 }

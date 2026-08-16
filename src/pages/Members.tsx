@@ -8,9 +8,7 @@ import {
   ShieldOff,
   Ban,
   CheckCircle,
-  RefreshCw,
   ImageOff,
-  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -198,38 +196,6 @@ export default function Members() {
 
   const { data: members, isLoading, error } = trpc.user.members.useQuery();
 
-  const discordIds = (members ?? [])
-    .map((m) => m.discordId)
-    .filter((id): id is string => !!id);
-
-  const { data: discordValidation } = trpc.user.validateDiscordIds.useQuery(
-    { discordIds },
-    { enabled: discordIds.length > 0, staleTime: 5 * 60 * 1000 },
-  );
-
-  const { data: syncStatus, refetch: refetchSyncStatus } =
-    trpc.user.memberSyncStatus.useQuery(undefined, { refetchInterval: 10000 });
-
-  const syncAllMutation = trpc.user.syncAllMembers.useMutation({
-    onSuccess: (result) => {
-      toast.success(
-        `Sync complete — ${result.updated} updated, ${result.skipped} unchanged`,
-      );
-      void utils.user.members.invalidate();
-      void refetchSyncStatus();
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const syncOneMutation = trpc.user.syncOneMember.useMutation({
-    onSuccess: (result) => {
-      toast.success(result.updated ? "Member synced" : "No changes found");
-      void utils.user.members.invalidate();
-      void refetchSyncStatus();
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
   const banMutation = trpc.user.ban.useMutation({
     onSuccess: () => {
       toast.success("User banned");
@@ -274,7 +240,6 @@ export default function Members() {
     return (
       m.name?.toLowerCase().includes(q) ||
       m.email?.toLowerCase().includes(q) ||
-      m.studentNumber?.toLowerCase().includes(q) ||
       m.group?.name?.toLowerCase().includes(q)
     );
   });
@@ -291,40 +256,11 @@ export default function Members() {
             </p>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => syncAllMutation.mutate()}
-            disabled={syncAllMutation.isPending || syncStatus?.isSyncing}
-          >
-            <RefreshCw
-              className={`mr-2 h-4 w-4 ${syncAllMutation.isPending || syncStatus?.isSyncing ? "animate-spin" : ""}`}
-            />
-            {syncAllMutation.isPending || syncStatus?.isSyncing
-              ? "Syncing…"
-              : "Refresh all"}
-          </Button>
-          {syncStatus && (
-            <p className="text-xs text-muted-foreground">
-              {syncStatus.lastSyncAt
-                ? `Last synced ${formatDate(syncStatus.lastSyncAt)}`
-                : "Not yet synced"}
-              {syncStatus.totalCached > 0 &&
-                ` · ${syncStatus.totalCached} cached`}
-            </p>
-          )}
-          {syncStatus?.lastError && (
-            <p className="text-xs text-destructive max-w-xs text-right truncate">
-              {syncStatus.lastError}
-            </p>
-          )}
-        </div>
       </div>
 
       <div className="mb-4 flex items-center gap-3">
         <Input
-          placeholder="Search by name, email, student ID, or group…"
+          placeholder="Search by name, email, or group…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
@@ -339,8 +275,6 @@ export default function Members() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[220px]">User</TableHead>
-              <TableHead>Student ID</TableHead>
-              <TableHead>Discord ID</TableHead>
               <TableHead>Group</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
@@ -362,12 +296,11 @@ export default function Members() {
               filtered.map((member) => {
                 const lastActive = member.sessions[0]?.updatedAt ?? null;
                 const isSelf = member.id === session?.user.id;
-                const inNotion = !!(member.studentNumber || member.group);
 
                 return (
                   <TableRow
                     key={member.id}
-                    className={!inNotion ? "opacity-60" : undefined}
+                    className={undefined}
                   >
                     <TableCell>
                       <div className="flex items-center gap-2.5">
@@ -384,46 +317,13 @@ export default function Members() {
                           <p className="text-xs text-muted-foreground truncate">
                             {member.email}
                           </p>
-                          {!inNotion && (
-                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
-                              Not found in Notion database
-                            </p>
-                          )}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">
-                      {member.studentNumber ?? (
-                        <span className="text-muted-foreground">
-                          {inNotion ? "—" : "N/A"}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {member.discordId ? (
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-mono">{member.discordId}</span>
-                          {discordValidation &&
-                            (discordValidation[member.discordId] === false ? (
-                              <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                                <AlertTriangle className="h-3 w-3 shrink-0" />
-                                Not found in Monash Server
-                              </span>
-                            ) : discordValidation[member.discordId] === true ? (
-                              <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
-                                <CheckCircle className="h-3 w-3 shrink-0" />
-                                Verified
-                              </span>
-                            ) : null)}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm">
                       {member.group?.name ?? (
                         <span className="text-muted-foreground">
-                          {inNotion ? "—" : "N/A"}
+                          N/A
                         </span>
                       )}
                     </TableCell>
@@ -483,20 +383,6 @@ export default function Members() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() =>
-                                syncOneMutation.mutate({ userId: member.id })
-                              }
-                              disabled={syncOneMutation.isPending || !inNotion}
-                              title={
-                                !inNotion
-                                  ? "User not found in Notion database"
-                                  : undefined
-                              }
-                            >
-                              <RefreshCw className="mr-2 h-4 w-4" />
-                              Refresh from Notion
-                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {member.role === "admin" ? (
                               <DropdownMenuItem
