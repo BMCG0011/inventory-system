@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logoHorizontalDark from "@/assets/Horizontal White & Blue.svg";
 import logoHorizontalLight from "@/assets/Horizontal Black & Blue.svg";
@@ -14,7 +13,6 @@ import {
   FileText,
   ScrollText,
   Users,
-  ChevronDown,
 } from "lucide-react";
 import { authClient } from "@/auth/client";
 import { trpc } from "@/client/trpc";
@@ -43,7 +41,6 @@ const coreItems = [
 ];
 
 export function AppSidebar() {
-  const [adminOpen, setAdminOpen] = useState(false);
   const { itemCount } = useCart();
   const navigate = useNavigate();
   const { data: session } = authClient.useSession();
@@ -120,44 +117,44 @@ export function AppSidebar() {
 
               {/* Administration group — admins only */}
               {isAdmin && (
-                    <SidebarMenu collapsible={true} label="Administration">
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                          <a
-                            onClick={(event) => (
-                              event.preventDefault(),
-                              void navigate("/consumables/requests")
-                            )}
-                            href="#"
-                            className="flex items-center gap-2"
-                          >
-                            <ClipboardList />
-                            <span>Requests</span>
-                            {pendingRequestCount && pendingRequestCount > 0 ? (
-                              <span className="ml-auto h-5 min-w-5 rounded-full bg-amber-500/20 px-1.5 text-xs font-semibold text-amber-700 dark:text-amber-200 leading-5 text-center tabular-nums">
-                                {pendingRequestCount}
-                              </span>
-                            ) : null}
-                          </a>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                          <a
-                            onClick={(event) => (
-                              event.preventDefault(),
-                              void navigate("/members")
-                            )}
-                            href="#"
-                            className="flex items-center gap-2"
-                          >
-                            <Users />
-                            <span>Members</span>
-                          </a>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    </SidebarMenu>
-                  )}
+                <SidebarMenu collapsible={true} label="Administration">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a
+                        onClick={(event) => (
+                          event.preventDefault(),
+                          void navigate("/consumables/requests")
+                        )}
+                        href="#"
+                        className="flex items-center gap-2"
+                      >
+                        <ClipboardList />
+                        <span>Requests</span>
+                        {pendingRequestCount && pendingRequestCount > 0 ? (
+                          <span className="ml-auto h-5 min-w-5 rounded-full bg-amber-500/20 px-1.5 text-xs font-semibold text-amber-700 dark:text-amber-200 leading-5 text-center tabular-nums">
+                            {pendingRequestCount}
+                          </span>
+                        ) : null}
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a
+                        onClick={(event) => (
+                          event.preventDefault(),
+                          void navigate("/members")
+                        )}
+                        href="#"
+                        className="flex items-center gap-2"
+                      >
+                        <Users />
+                        <span>Members</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              )}
 
               <SidebarMenu className="mt-2">
                 <SidebarMenuItem>
