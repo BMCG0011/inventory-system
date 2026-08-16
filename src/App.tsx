@@ -36,11 +36,11 @@ const App = () => {
       <AuthProvider>
         <CartProvider>
           <a
-              href="#main"
-              className="sr-only focus:not-sr-only absolute focus:absolute top-0 left-0 bg-white text-black px-4 py-2 rounded-md z-50"
-            >
-              Skip to main content
-            </a>
+            href="#main"
+            className="sr-only focus:not-sr-only absolute focus:absolute top-0 left-0 bg-white text-black px-4 py-2 rounded-md z-50"
+          >
+            Skip to main content
+          </a>
           <Toaster position="top-right" richColors closeButton />
           <Routes>
             <Route path="error" element={<ErrorPage />} />
