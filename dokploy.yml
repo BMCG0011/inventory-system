@@ -30,6 +30,7 @@ services:
     # VITE_KIOSK_SECRET and VITE_PRINTING_ENABLED are baked in at CI build time
     # via the VITE_KIOSK_SECRET Actions secret and VITE_PRINTING_ENABLED Actions var.
     image: bmcg0011/inventory-system:main
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       db:
