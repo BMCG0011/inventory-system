@@ -22,6 +22,8 @@ import { Form } from "@/components/ui/form";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/client/trpc";
+import { ItemStatus } from "@prisma/client";
+
 function getItemInvalidReason(
   item: ReturnType<typeof useCart>["items"][number],
 ): string | null {
@@ -29,19 +31,18 @@ function getItemInvalidReason(
     if (item.quantity > (item.consumable.available ?? 0)) {
       return `Only ${item.consumable.available} available`;
     }
-
     return null;
   }
 
-  if (item.stored === false) {
-    return "Marked as Lab Use";
+  if (item.status === ItemStatus.CHURCH_USE) {
+    return "Marked as Church Use";
   }
 
-  const latest = item.ItemRecords?.slice().sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  )[0];
+  if (item.status === ItemStatus.ON_LOAN) {
+    return "Currently on loan";
+  }
 
-  return latest?.loaned ? "Currently in use" : null;
+  return null;
 }
 
 export default function Cart() {
@@ -91,9 +92,9 @@ export default function Cart() {
       return;
     }
 
-    if (!data.consumable && data.stored === false) {
+    if (!data.consumable && data.status !== ItemStatus.STORED) {
       toast.error(
-        `${data.name} is marked as Lab Use and cannot be checked out.`,
+        `${data.name} is not marked as Stored and therefore cannot be checked out.`,
       );
       return;
     }

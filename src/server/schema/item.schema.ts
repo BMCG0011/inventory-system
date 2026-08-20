@@ -22,10 +22,7 @@ export const itemInput = z.object({
     .string()
     .max(200, "Manufacturer too long (max 200 chars)")
     .optional(),
-  model: z
-    .string()
-    .max(200, "Model too long (max 200 chars)")
-    .optional(),
+  model: z.string().max(200, "Model too long (max 200 chars)").optional(),
   itemSerial: z
     .string()
     .max(100, "Item serial too long (max 100 chars)")
@@ -33,9 +30,7 @@ export const itemInput = z.object({
   tags: z.array(tagInput),
   // location
   locationId: z.uuid("Invalid location ID format"),
-  status: z
-    .enum(ItemStatus)
-    .optional(),
+  status: z.enum(ItemStatus).optional(),
   // purchase info
   costCents: z
     .number()

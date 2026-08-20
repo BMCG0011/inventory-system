@@ -87,9 +87,9 @@ export const itemRouter = router({
       const { id, locationId, consumable, tags, ...rest } = input;
       const itemData = { ...rest };
 
-      // Only admins can modify the storage/lab-use state.
+      // Restrict some editing to admins (currently unused)
       if (ctx.user.role !== "admin") {
-        delete itemData.stored;
+        // delete itemData.stored;
       }
 
       return await prisma.$transaction(async (tx) => {
@@ -105,22 +105,23 @@ export const itemRouter = router({
         });
 
         const latestRecord = existingItem?.ItemRecords[0];
-        const shouldAutoCheckin =
-          ctx.user.role === "admin" &&
-          itemData.stored === false &&
-          existingItem?.consumable == null &&
-          latestRecord?.loaned === true;
+        // TODO: figure out what this was doing
+        // const shouldAutoCheckin =
+        //   ctx.user.role === "admin" &&
+        //   itemData.stored === false &&
+        //   existingItem?.consumable == null &&
+        //   latestRecord?.loaned === true;
 
-        if (shouldAutoCheckin) {
-          await tx.itemRecord.create({
-            data: {
-              loaned: false,
-              actionByUserId: ctx.user.id,
-              itemId: id,
-              quantity: 1,
-            },
-          });
-        }
+        // if (shouldAutoCheckin) {
+        //   await tx.itemRecord.create({
+        //     data: {
+        //       loaned: false,
+        //       actionByUserId: ctx.user.id,
+        //       itemId: id,
+        //       quantity: 1,
+        //     },
+        //   });
+        // }
 
         const upsertTags = await Promise.all(
           tags.map(async (tag) => {

@@ -113,8 +113,12 @@ const assetStatusStored = async (
   tx: ExtendedTransactionClient,
   items: CartObject[],
 ) => {
-  await Promise.all(items.map(item => tx.item.update({
-    where: {id: item.uuid},
-    data: {status: ItemStatus.STORED}
-  })))
+  await Promise.all(
+    items.map((item) =>
+      tx.item.update({
+        where: { id: item.uuid },
+        data: { status: ItemStatus.STORED },
+      }),
+    ),
+  );
 };

@@ -46,12 +46,11 @@ function getItemInvalidReason(
   if (item.status === ItemStatus.CHURCH_USE) {
     return "Marked as Church Use";
   }
-  
 
   if (item.status === ItemStatus.ON_LOAN) {
     return "Currently on loan";
   }
-  
+
   return null;
 }
 

@@ -22,6 +22,11 @@ import { Badge } from "@/components/ui/badge";
 import type React from "react";
 import { Route, Routes } from "react-router-dom";
 import ItemDetails from "@/pages/ItemDetails";
+import { ItemStatus } from "@prisma/client";
+import {
+  getItemStatusBadge,
+  getItemStatusBadgeConfig,
+} from "@/lib/item-status";
 
 type GetItemsOutput = inferProcedureOutput<
   AppRouter["item"]["list"]
@@ -207,33 +212,7 @@ function Items({
           id: "status",
           header: () => "Status",
           cell: ({ row }) => {
-            const records = row.original.ItemRecords;
-            const latest = records
-              ?.slice()
-              .sort(
-                (a, b) =>
-                  new Date(b.createdAt).getTime() -
-                  new Date(a.createdAt).getTime(),
-              )[0];
-            const isLabUse = row.original.stored === false;
-            const isInUse = latest?.loaned ?? false;
-            const label = isLabUse
-              ? "Lab Use"
-              : isInUse
-                ? "On Loan"
-                : "In Storage";
-            return (
-              <Badge
-                variant={
-                  isLabUse ? "default" : isInUse ? "destructive" : "secondary"
-                }
-                className={
-                  isLabUse ? "bg-blue-600 text-white hover:bg-blue-700" : ""
-                }
-              >
-                {label}
-              </Badge>
-            );
+            return getItemStatusBadge(row.original.status);
           },
         },
     {
@@ -246,19 +225,10 @@ function Items({
 
         if (!consumable) {
           const inCart = itemInCart(item.id);
-          const isLabUse = item.stored === false;
-          const latest = item.ItemRecords?.slice().sort(
-            (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          )[0];
-          const isOnLoan = latest?.loaned ?? false;
 
-          if (isLabUse) {
+          if (item.status !== ItemStatus.STORED) {
             cartDisabled = true;
-            cartLabel = "In Use";
-          } else if (isOnLoan) {
-            cartDisabled = true;
-            cartLabel = "Loaned";
+            cartLabel = getItemStatusBadgeConfig(item.status).name;
           } else if (inCart) {
             cartDisabled = true;
             cartLabel = "In Cart";

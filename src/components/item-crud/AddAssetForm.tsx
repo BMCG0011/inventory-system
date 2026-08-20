@@ -94,10 +94,7 @@ export function AddAssetForm({
             <FormItem>
               <FormLabel>Cost</FormLabel>
               <FormControl>
-                <MoneyInput
-                  value={field.value}
-                  onChange={field.onChange}
-                />
+                <MoneyInput value={field.value} onChange={field.onChange} />
               </FormControl>
               <FormMessage />
             </FormItem>

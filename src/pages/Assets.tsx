@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { MapPin } from "lucide-react";
+import { ItemStatus } from "@prisma/client";
 
 type GetItemsOutput = inferProcedureOutput<
   AppRouter["item"]["list"]
@@ -98,9 +99,9 @@ const Assets = () => {
     (item: GetItemsOutput) => {
       if (item) {
         if (!item.consumable) {
-          if (item.stored === false) {
+          if (item.status !== ItemStatus.STORED) {
             toast.error(
-              `${item.name} is marked as Lab Use and cannot be checked out.`,
+              `${item.name} is not marked as Stored and cannot be checked out.`,
             );
             return;
           }

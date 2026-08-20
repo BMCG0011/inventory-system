@@ -1,5 +1,12 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { forwardRef, useCallback, useEffect, useState, useRef, type ReactNode } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useState,
+  useRef,
+  type ReactNode,
+} from "react";
 import { NumericFormat, type NumericFormatProps } from "react-number-format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,10 +133,8 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     return (
       <div className={`flex items-center ${className ?? ""} relative`}>
         {prefixNode ? (
-          <div className="absolute left-0 h-full">
-            {prefixNode}
-          </div>
-        ): null}
+          <div className="absolute left-0 h-full">{prefixNode}</div>
+        ) : null}
         <NumericFormat
           value={value}
           onValueChange={handleChange}
@@ -145,7 +150,10 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           prefix={prefix}
           customInput={Input}
           placeholder={placeholder}
-          className={cn("[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-r-none relative h-10", inputClassName ?? "")}
+          className={cn(
+            "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-r-none relative h-10",
+            inputClassName ?? "",
+          )}
           getInputRef={combinedRef} // Use combined ref
           {...props}
         />

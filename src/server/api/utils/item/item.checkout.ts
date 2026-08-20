@@ -144,14 +144,14 @@ const assetsStatusOnLoan = async (
   await Promise.all(
     assets.map(async (asset) => {
       await tx.item.update({
-        where: {id: asset.uuid},
+        where: { id: asset.uuid },
         data: {
-          status: ItemStatus.ON_LOAN
-        }
-      })
-    })
-  )
-}
+          status: ItemStatus.ON_LOAN,
+        },
+      });
+    }),
+  );
+};
 
 const assetCanBeCheckedOut = (
   itemRecord: ItemRecord[],

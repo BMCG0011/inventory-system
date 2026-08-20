@@ -1,5 +1,6 @@
 import { trpc } from "@/client/trpc";
 import type { AppRouter } from "@/server/api/routers/_app";
+import { ItemStatus } from "@prisma/client";
 import type { inferProcedureOutput } from "@trpc/server";
 import {
   createContext,
@@ -267,9 +268,9 @@ export function CartProvider({
       return false;
     }
 
-    if (cartItem.stored === false) {
+    if (cartItem.status !== ItemStatus.STORED) {
       toast.error(
-        `${cartItem.name} is marked as Lab Use and cannot be checked out.`,
+        `${cartItem.name} is not marked as Stored and cannot be checked out.`,
       );
       return false;
     }

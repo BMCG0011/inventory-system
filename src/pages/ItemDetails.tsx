@@ -31,8 +31,16 @@ import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { MoneyInput } from "@/components/inputs/money-input";
 import type { VariantProps } from "class-variance-authority";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ItemStatus } from "@prisma/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ItemStatus, type Location } from "@prisma/client";
+import { itemStatusBadgeConfig } from "@/lib/item-status";
+import { CascadingLocation } from "@/components/item-crud/CascadingLocation";
 
 interface ItemDetailsProps {
   passedId?: string;
@@ -60,9 +68,9 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
       toast.success("Successfully updated item details");
     },
     onError: (err) => {
-      toast.error(`Failed to update item: ${err.message}`)
-    }
-  })
+      toast.error(`Failed to update item: ${err.message}`);
+    },
+  });
 
   // Use effectiveId for your logic
 
@@ -302,53 +310,34 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                 {/** TODO: add whole path / breadcrumbs for location */}
                 <InfoRow
                   label="Location"
-                  value={reactiveData?.location?.name ?? "N/A"}
+                  value={reactiveData?.location}
+                  type="location"
+                  isEditMode={isEditMode}
+                  editable={true}
+                  onChange={(value) => {}}
                 />
                 {/* TODO: change/update status system */}
-                <InfoRow 
+                <InfoRow
                   label="Status"
                   value={reactiveData?.status}
                   type="option"
-                  options={[
-                    {
-                      value: "CHURCH_USE",
-                      name: "Church Use",
-                      className: "bg-blue-600 text-white hover:bg-blue-700"
-                    },
-                    {
-                      value: "STORED",
-                      name: "Stored",
-                      variant: "secondary",
-                    },
-                    {
-                      value: "IN_REPAIR",
-                      name: "In Repair",
-                      className: "bg-orange-600 text-white hover:bg-orange-700"
-                    },
-                    {
-                      value: "DISPOSED_OF",
-                      name: "Disposed Of",
-                      variant: "destructive",
-                    },
-                    {
-                      value: "ON_LOAN",
-                      name: "On Loan", 
-                      variant: "default",
-                      selectable: false
-                    }
-                  ]}
+                  options={itemStatusBadgeConfig}
                   isEditMode={isEditMode}
                   editable={reactiveData?.status !== "ON_LOAN"}
                   onChange={(value) => {
-                    setReactiveData({...reactiveData, status: value as ItemStatus ?? reactiveData.status});
+                    setReactiveData({
+                      ...reactiveData,
+                      status: (value as ItemStatus) ?? reactiveData.status,
+                    });
                   }}
                 />
-                {reactiveData.status === ItemStatus.ON_LOAN && latestRecord?.actionBy && (
-                  <InfoRow
-                    label="Loaned To"
-                    value={latestRecord.actionBy.name}
-                  />
-                )}
+                {reactiveData.status === ItemStatus.ON_LOAN &&
+                  latestRecord?.actionBy && (
+                    <InfoRow
+                      label="Loaned To"
+                      value={latestRecord.actionBy.name}
+                    />
+                  )}
               </div>
             </Section>
 
@@ -360,7 +349,10 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                   isEditMode={isEditMode}
                   type="text"
                   onChange={(value) => {
-                    setReactiveData({...reactiveData, name: value ?? reactiveData.name});
+                    setReactiveData({
+                      ...reactiveData,
+                      name: value ?? reactiveData.name,
+                    });
                   }}
                 />
                 <InfoRow
@@ -369,7 +361,10 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                   isEditMode={isEditMode}
                   type="text"
                   onChange={(value) => {
-                    setReactiveData({...reactiveData, manufacturer: value ?? null});
+                    setReactiveData({
+                      ...reactiveData,
+                      manufacturer: value ?? null,
+                    });
                   }}
                 />
                 <InfoRow
@@ -378,7 +373,7 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                   isEditMode={isEditMode}
                   type="text"
                   onChange={(value) => {
-                    setReactiveData({...reactiveData, model: value ?? null});
+                    setReactiveData({ ...reactiveData, model: value ?? null });
                   }}
                 />
                 <InfoRow
@@ -387,7 +382,10 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                   isEditMode={isEditMode}
                   type="text"
                   onChange={(value) => {
-                    setReactiveData({...reactiveData, itemSerial: value ?? null});
+                    setReactiveData({
+                      ...reactiveData,
+                      itemSerial: value ?? null,
+                    });
                   }}
                 />
               </div>
@@ -401,7 +399,10 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                   isEditMode={isEditMode}
                   type="price"
                   onChange={(value) => {
-                    setReactiveData({...reactiveData, costCents: value ?? null});
+                    setReactiveData({
+                      ...reactiveData,
+                      costCents: value ?? null,
+                    });
                   }}
                 />
                 <InfoRow
@@ -410,7 +411,10 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                   isEditMode={isEditMode}
                   type="price"
                   onChange={(value) => {
-                    setReactiveData({...reactiveData, depreciatedValueCents: value ?? null});
+                    setReactiveData({
+                      ...reactiveData,
+                      depreciatedValueCents: value ?? null,
+                    });
                   }}
                 />
                 <InfoRow
@@ -419,7 +423,10 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                   type="date"
                   isEditMode={isEditMode}
                   onChange={(value) => {
-                    setReactiveData({...reactiveData, purchasedAt: value ?? null});
+                    setReactiveData({
+                      ...reactiveData,
+                      purchasedAt: value ?? null,
+                    });
                   }}
                 />
                 <InfoRow
@@ -428,7 +435,10 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                   isEditMode={isEditMode}
                   type="text"
                   onChange={(value) => {
-                    setReactiveData({...reactiveData, warranty: value ?? null});
+                    setReactiveData({
+                      ...reactiveData,
+                      warranty: value ?? null,
+                    });
                   }}
                 />
               </div>
@@ -564,32 +574,36 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
         </div>
         {isEditMode ? (
           <div className="fixed bottom-0 right-0 p-4 flex flex-row gap-3">
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={() => {
                 setReactiveData(data);
                 setIsEditMode(false);
               }}
             >
-                Cancel
+              Cancel
             </Button>
-            <Button 
+            <Button
               variant="default"
               onClick={() => {
-                const processedData = Object.fromEntries(Object.entries(reactiveData).filter(([_, v]) => v != null))
+                const processedData = Object.fromEntries(
+                  Object.entries(reactiveData).filter(([_, v]) => v != null),
+                );
                 if (!processedData) return;
-                processedData
+                processedData;
                 updateItem.mutate({
                   ...processedData,
                   name: reactiveData.name,
                   tags: reactiveData.tags,
                   id: reactiveData.id,
                   locationId: reactiveData.locationId,
-                  consumable: reactiveData?.consumable ? {
-                    available: reactiveData.consumable.available,
-                    total: reactiveData.consumable.total,
-                    itemId: reactiveData.consumable.itemId,
-                  } : undefined,
+                  consumable: reactiveData?.consumable
+                    ? {
+                        available: reactiveData.consumable.available,
+                        total: reactiveData.consumable.total,
+                        itemId: reactiveData.consumable.itemId,
+                      }
+                    : undefined,
                 });
               }}
             >
@@ -609,8 +623,8 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
             <AlertDialogDescription>
               There {siblingCount === 1 ? "is" : "are"}{" "}
               <strong>{siblingCount}</strong> other item
-              {siblingCount === 1 ? "" : "s"} named &ldquo;{reactiveData?.name}&rdquo;.
-              Remove the image from all of them too?
+              {siblingCount === 1 ? "" : "s"} named &ldquo;{reactiveData?.name}
+              &rdquo;. Remove the image from all of them too?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -638,8 +652,8 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
             <AlertDialogDescription>
               There {siblingCount === 1 ? "is" : "are"}{" "}
               <strong>{siblingCount}</strong> other item
-              {siblingCount === 1 ? "" : "s"} named &ldquo;{reactiveData?.name}&rdquo;.
-              Apply this image to all of them?
+              {siblingCount === 1 ? "" : "s"} named &ldquo;{reactiveData?.name}
+              &rdquo;. Apply this image to all of them?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -791,7 +805,7 @@ function InfoRow({
   isEditMode,
   editable,
   onChange,
-  options
+  options,
 }: {
   label: string;
   isEditMode?: boolean;
@@ -803,13 +817,13 @@ function InfoRow({
       onChange?: (value?: string) => void;
       options?: undefined;
     }
-    | {
+  | {
       type: "price";
       value: number | null; // in cents?
       onChange?: (value?: number) => void;
       options?: undefined;
     }
-    | {
+  | {
       type: "date";
       value: Date | null;
       onChange?: (value?: Date) => void;
@@ -818,8 +832,8 @@ function InfoRow({
   | {
       type: "option";
       options: {
-        value: string; 
-        name: string; 
+        value: string;
+        name: string;
         className?: string;
         variant?: VariantProps<typeof badgeVariants>["variant"];
         selectable?: boolean;
@@ -827,17 +841,13 @@ function InfoRow({
       value: string | null;
       onChange?: (value?: string) => void;
     }
+  | {
+      type: "location";
+      value: Location | null;
+      onChange?: (value?: string) => void;
+      options?: undefined;
+    }
 )) {
-
-  // if (type === "option") {
-  //   if (isEditMode && editable !== false) {
-  //     return null;
-  //   }
-  //   const currentOption = options.filter((option) => option.value === value)?.[0];
-
-  //   return 
-
-  // }
   let currentOption;
 
   return (
@@ -856,46 +866,57 @@ function InfoRow({
             onChange={(val) => (onChange?.(val), val)}
           />
         ) : type === "price" ? (
-          <MoneyInput value={value ?? undefined} onChange={onChange}/>
+          <MoneyInput value={value ?? undefined} onChange={onChange} />
         ) : type === "option" ? (
           <Select value={value ?? undefined} onValueChange={onChange}>
             <SelectTrigger>
-              <SelectValue/>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {options.filter(({selectable}) => selectable !== false).map(({value, name: optionName, variant, className}) => (
-                <SelectItem value={value} key={value}>
-                  <Badge
-                    variant={variant}
-                    className={className}
-                  >
-                    {optionName}
-                  </Badge>
-                </SelectItem>
-              ))}
+              {options
+                .filter(({ selectable }) => selectable !== false)
+                .map(({ value, name: optionName, variant, className }) => (
+                  <SelectItem value={value} key={value}>
+                    <Badge variant={variant} className={className}>
+                      {optionName}
+                    </Badge>
+                  </SelectItem>
+                ))}
             </SelectContent>
-            
           </Select>
+        ) : type === "location" ? (
+          <CascadingLocation/>
         ) : null
       ) : type === "option" ? (
-        currentOption = options.filter((option) => option.value === value)?.[0],
-        (<Badge 
-          variant={currentOption?.variant ?? "default"}
-          className={currentOption.className}
-        >
-          {currentOption.name}
-        </Badge>)
+        ((currentOption = options.filter(
+          (option) => option.value === value,
+        )?.[0]),
+        (
+          <Badge
+            variant={currentOption?.variant ?? "default"}
+            className={currentOption.className}
+          >
+            {currentOption.name}
+          </Badge>
+        ))
       ) : (
-          <p>
-            {value == null
-              ? " – "
-              : type === "text" || type == undefined
-                ? value
-                : type === "price"
-                  ? `$${(value / 100).toFixed(2)}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                  : /** type == "date" */ value.toLocaleString()}
-          </p>
-        )}
+        <p>
+          {value == null
+            ? " – "
+            : type === "text" || type == undefined
+              ? value
+              : type === "price"
+                ? `$${(value / 100).toFixed(2)}`.replace(
+                    /\B(?=(\d{3})+(?!\d))/g,
+                    ",",
+                  )
+                : type === "date"
+                  ? value.toLocaleString()
+                  : type === "location"
+                    ? value.name
+                    : null}
+        </p>
+      )}
     </div>
   );
 }
