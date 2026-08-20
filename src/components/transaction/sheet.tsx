@@ -129,7 +129,7 @@ export default function TransactionDetailsSheet({
                           </p>
                           <p className="text-neutral-300 font-mono text-lg">
                             {formatCurrency(
-                              selectedRow.item?.cost,
+                              selectedRow.item?.costCents,
                               selectedRow.quantity,
                             )}
                           </p>

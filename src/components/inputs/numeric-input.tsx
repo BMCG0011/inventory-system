@@ -1,8 +1,9 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { forwardRef, useCallback, useEffect, useState, useRef } from "react";
+import { forwardRef, useCallback, useEffect, useState, useRef, type ReactNode } from "react";
 import { NumericFormat, type NumericFormatProps } from "react-number-format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 export interface NumberInputProps
   extends Omit<NumericFormatProps, "value" | "onValueChange"> {
@@ -15,10 +16,12 @@ export interface NumberInputProps
   value?: number; // Controlled value
   suffix?: string;
   prefix?: string;
+  prefixNode?: ReactNode;
   onValueChange?: (value: number | undefined) => void;
   fixedDecimalScale?: boolean;
   decimalScale?: number;
-  className: string;
+  className?: string;
+  inputClassName?: string;
 }
 
 export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
@@ -35,8 +38,10 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       decimalScale = 0,
       suffix,
       prefix,
+      prefixNode,
       value: controlledValue,
       className,
+      inputClassName,
       ...props
     },
     ref,
@@ -114,12 +119,17 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         return;
       }
 
-      // Field left empty, set to min
-      setValue(min);
+      // // Field left empty, set to min
+      // setValue(min);
     };
 
     return (
-      <div className={`flex items-center ${className}`}>
+      <div className={`flex items-center ${className ?? ""} relative`}>
+        {prefixNode ? (
+          <div className="absolute left-0 h-full">
+            {prefixNode}
+          </div>
+        ): null}
         <NumericFormat
           value={value}
           onValueChange={handleChange}
@@ -135,7 +145,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           prefix={prefix}
           customInput={Input}
           placeholder={placeholder}
-          className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-r-none relative h-10"
+          className={cn("[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-r-none relative h-10", inputClassName ?? "")}
           getInputRef={combinedRef} // Use combined ref
           {...props}
         />

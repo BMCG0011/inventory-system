@@ -1,6 +1,6 @@
 // Database-mimicking mock data generation using Prisma types
 import { faker } from "@faker-js/faker";
-import { Prisma, PrismaClient } from "@prisma/client";
+import { ItemStatus, Prisma, PrismaClient } from "@prisma/client";
 import type {
   Location as PrismaLocation,
   Tag as PrismaTag,
@@ -396,6 +396,8 @@ export class DatabaseMockFactory {
       locationId: location.id,
       stored: !itemRecord.loaned, // If loaned, it's not stored
       cost: faker.number.int({ min: 10, max: 50000 }),
+      costCents: faker.number.int({ min: 10, max: 50000 }),
+      depreciatedValueCents: faker.number.int({ min: 10, max: 50000 }),
       createdAt: faker.date.past({ years: 2 }),
       updatedAt: faker.date.recent(),
       deleted: faker.datatype.boolean({ probability: 0.05 }),
@@ -407,6 +409,12 @@ export class DatabaseMockFactory {
       tags, // Changed from itemTag to tags
       consumable,
       ItemRecords: [itemRecord],
+      purchasedAt: faker.date.past({ years: 3 }),
+      itemSerial: faker.string.alphanumeric(5),
+      manufacturer: faker.company.name(),
+      model: faker.commerce.productName(),
+      warranty: faker.lorem.paragraph(),
+      status: ItemStatus.STORED,
     };
 
     return {

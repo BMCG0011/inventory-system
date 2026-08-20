@@ -17,6 +17,7 @@ import { useForm } from "react-hook-form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
+import { ItemStatus } from "@prisma/client";
 
 export const cartItemSchema = z.object({
   id: z.uuid(),
@@ -42,14 +43,16 @@ function getItemInvalidReason(
     return null;
   }
 
-  if (item.stored === false) {
-    return "Marked as Lab Use";
+  if (item.status === ItemStatus.CHURCH_USE) {
+    return "Marked as Church Use";
   }
+  
 
-  const latest = item.ItemRecords?.slice().sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  )[0];
-  return latest?.loaned ? "Currently on loan" : null;
+  if (item.status === ItemStatus.ON_LOAN) {
+    return "Currently on loan";
+  }
+  
+  return null;
 }
 
 export default function CartDialog() {

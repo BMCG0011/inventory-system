@@ -105,7 +105,7 @@ function Items({
               <Button variant="link">{row.getValue("name")}</Button>
             </SheetTrigger>
             <SheetContent className="sm:max-w-3xl p-0 overflow-hidden">
-              <div className="flex flex-col h-full max-h-screen">
+              <div className="flex flex-col h-full max-h-screen overflow-y-auto">
                 <SheetHeader className="px-6 pt-6 pb-4 flex-shrink-0">
                   <SheetTitle>Item Details</SheetTitle>
                   <SheetDescription>

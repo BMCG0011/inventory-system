@@ -20,7 +20,7 @@ export const itemRouter = router({
         ...(input.id ? { id: input.id } : {}),
         name: input.name,
         locationId: input.locationId,
-        cost: input.cost,
+        costCents: input.costCents,
         consumable: input.consumable
           ? {
               create: {

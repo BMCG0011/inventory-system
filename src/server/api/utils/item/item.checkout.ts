@@ -8,7 +8,7 @@ import { z } from "zod";
 import { prisma } from "@/server/lib/prisma";
 import type { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { validateCart } from "./item.utils";
-import type { ItemRecord } from "@prisma/client";
+import { ItemStatus, type ItemRecord } from "@prisma/client";
 
 interface CartObject {
   ok: boolean;
@@ -51,7 +51,7 @@ export const itemCheckout = async (
         assetCanBeCheckedOut(
           response.data!.ItemRecords,
           response.data!.id,
-          response.data!.stored,
+          response.data!.status === "STORED",
         ),
       );
 
@@ -60,6 +60,7 @@ export const itemCheckout = async (
     await prisma.$transaction(async (tx) => {
       const consumableUpdates = consumables as CartObject[];
       const assetUpdates = assets as CartObject[];
+      await assetsStatusOnLoan(tx, assetUpdates);
       await consumableDecrementQuantity(tx, consumableUpdates);
       await createItemRecord(
         ctx,
@@ -135,6 +136,22 @@ const consumableDecrementQuantity = async (
     }),
   );
 };
+
+const assetsStatusOnLoan = async (
+  tx: ExtendedTransactionClient,
+  assets: CartObject[],
+) => {
+  await Promise.all(
+    assets.map(async (asset) => {
+      await tx.item.update({
+        where: {id: asset.uuid},
+        data: {
+          status: ItemStatus.ON_LOAN
+        }
+      })
+    })
+  )
+}
 
 const assetCanBeCheckedOut = (
   itemRecord: ItemRecord[],

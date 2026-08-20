@@ -298,10 +298,7 @@ export default function Members() {
                 const isSelf = member.id === session?.user.id;
 
                 return (
-                  <TableRow
-                    key={member.id}
-                    className={undefined}
-                  >
+                  <TableRow key={member.id} className={undefined}>
                     <TableCell>
                       <div className="flex items-center gap-2.5">
                         <MemberAvatar member={member} />
@@ -322,9 +319,7 @@ export default function Members() {
                     </TableCell>
                     <TableCell className="text-sm">
                       {member.group?.name ?? (
-                        <span className="text-muted-foreground">
-                          N/A
-                        </span>
+                        <span className="text-muted-foreground">N/A</span>
                       )}
                     </TableCell>
                     <TableCell>
