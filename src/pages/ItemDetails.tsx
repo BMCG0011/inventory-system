@@ -41,6 +41,7 @@ import {
 import { ItemStatus, type Location } from "@prisma/client";
 import { itemStatusBadgeConfig } from "@/lib/item-status";
 import { CascadingLocation } from "@/components/item-crud/CascadingLocation";
+import { LocationSelector } from "@/components/item-crud/LocationSelector";
 
 interface ItemDetailsProps {
   passedId?: string;
@@ -445,6 +446,7 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
             </Section>
 
             {/* Tags */}
+            {/* TODO: add editing functionality here */}
             <Section title="Tags">
               <div className="flex flex-wrap gap-2 mt-2">
                 {reactiveData?.tags.length ? (
@@ -885,7 +887,15 @@ function InfoRow({
             </SelectContent>
           </Select>
         ) : type === "location" ? (
-          <CascadingLocation/>
+          // TODO: fix and finish this 
+          <LocationSelector 
+            parentId={value?.parentId}
+            value={value?.id ?? ""}
+            onSelect={(id, data) => {
+              onChange?.(id);
+            }}
+            key={value?.id ?? ""}
+          />
         ) : null
       ) : type === "option" ? (
         ((currentOption = options.filter(
