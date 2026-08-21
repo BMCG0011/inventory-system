@@ -12,7 +12,7 @@ import {
   CommandList,
 } from "../ui/command";
 import { cn, truncateString } from "@/lib/utils";
-import React, { useState } from "react";
+import React, { useState, type ReactNode } from "react";
 import { useLocation } from "@/hooks/use-location";
 
 type GetSingleLocationOutput = inferProcedureOutput<
@@ -25,8 +25,11 @@ interface LocationSelectorProps {
   onSelect: (
     locationId: string,
     locationData: GetSingleLocationOutput | null,
-  ) => void;
+  ) => void | boolean;
   key: React.Key | null;
+  listPrefix?: ReactNode;
+  keepOpen?: boolean;
+  valueText?: string | null;
 }
 
 // TODO: Update levels to show and path
@@ -35,6 +38,8 @@ export function LocationSelector({
   value,
   onSelect,
   key = null,
+  listPrefix = null,
+  valueText = null
 }: LocationSelectorProps) {
   const [open, setOpen] = useState(false);
 
@@ -49,8 +54,10 @@ export function LocationSelector({
     // On time select
     if (location) {
       const newValue = location.id === value ? "" : location.id;
-      onSelect(newValue, newValue ? location : null);
-      setOpen(false);
+      const result = onSelect(newValue, newValue ? location : null);
+      if (result !== false) {
+        setOpen(false);
+      }
     }
   };
 
@@ -67,7 +74,7 @@ export function LocationSelector({
               aria-expanded={open}
               className="w-[150px] justify-between"
             >
-              {value && locations
+              {valueText ? truncateString(valueText, 12) : value && locations
                 ? truncateString(
                     locations.find((location) => location.id === value)?.name ??
                       "Select location",
@@ -87,6 +94,7 @@ export function LocationSelector({
               <CommandList>
                 <CommandEmpty>No child locations found</CommandEmpty>
                 <CommandGroup>
+                  {listPrefix}
                   {locations?.map((location) => (
                     <CommandItem
                       key={location.id}

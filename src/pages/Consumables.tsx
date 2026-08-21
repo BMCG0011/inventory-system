@@ -23,7 +23,7 @@ import { RequestConsumableDialog } from "@/components/request-consumable-dialog"
 import { TableActions } from "@/components/data-table/table-actions";
 import ErrorPage from "./Error";
 import { Route, Routes, useParams } from "react-router-dom";
-import LocationBreadcrumb from "@/components/Location";
+import SelectableLocationBreadcrumb from "@/components/Location";
 import ModifyItemSheet from "@/components/item-crud/ModifyItemSheet";
 import { keepPreviousData } from "@tanstack/react-query";
 import type { SortingState } from "@tanstack/react-table";
@@ -156,7 +156,7 @@ const Consumables = () => {
     return (
       <div className="container mx-auto py-10 mb-10">
         <Routes>
-          <Route path="*" element={<LocationBreadcrumb />} />
+          <Route path="*" element={<SelectableLocationBreadcrumb />} />
         </Routes>
         <div className="py-10">
           <Loading />
@@ -169,7 +169,7 @@ const Consumables = () => {
     return (
       <div className="container mx-auto py-10 mb-10">
         <Routes>
-          <Route path="*" element={<LocationBreadcrumb />} />
+          <Route path="*" element={<SelectableLocationBreadcrumb />} />
         </Routes>
         <ErrorPage message={error.message} />
       </div>
@@ -187,7 +187,7 @@ const Consumables = () => {
       </div>
 
       <Routes>
-        <Route path="*" element={<LocationBreadcrumb />} />
+        <Route path="*" element={<SelectableLocationBreadcrumb />} />
       </Routes>
 
       <DataTable

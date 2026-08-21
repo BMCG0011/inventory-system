@@ -22,3 +22,20 @@ export function useLocation(parentId: string | null) {
     error: parentId === null ? rootError : childError,
   };
 }
+
+export function useLocationPath(locationId: string | null) {
+  const {
+    data: path,
+    isLoading,
+    error,
+  } = trpc.location.getPath.useQuery(
+    { id: locationId! },
+    { enabled: locationId !== null },
+  );
+
+  return {
+    path,
+    isLoading,
+    error,
+  };
+}

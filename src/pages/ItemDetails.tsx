@@ -42,6 +42,9 @@ import { ItemStatus, type Location } from "@prisma/client";
 import { itemStatusBadgeConfig } from "@/lib/item-status";
 import { CascadingLocation } from "@/components/item-crud/CascadingLocation";
 import { LocationSelector } from "@/components/item-crud/LocationSelector";
+import NestingLocation from "@/components/item-crud/NestingLocation";
+import { useLocationPath } from "@/hooks/use-location";
+import {StaticLocationBreadcrumb} from "@/components/Location";
 
 interface ItemDetailsProps {
   passedId?: string;
@@ -86,6 +89,7 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
       id: itemId,
     },
   );
+
   const { data, isLoading, error, refetch } = trpc.item.get.useQuery({
     id: itemId,
   });
@@ -315,7 +319,12 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                   type="location"
                   isEditMode={isEditMode}
                   editable={true}
-                  onChange={(value) => {}}
+                  onChange={(value) => {
+                    setReactiveData({
+                      ...reactiveData,
+                      locationId: value ?? "",
+                    })
+                  }}
                 />
                 {/* TODO: change/update status system */}
                 <InfoRow
@@ -850,7 +859,15 @@ function InfoRow({
       options?: undefined;
     }
 )) {
-  let currentOption;
+  let currentOption, path, isLoading;
+
+  if (type === "location") { // never changes mid-component render so conditional execution of hook is okay
+    const response = useLocationPath(value?.id ?? null);
+    console.log(value?.id)
+    path = response.path;
+    console.log(path);
+    isLoading = response.isLoading;
+  }
 
   return (
     <div>
@@ -887,15 +904,7 @@ function InfoRow({
             </SelectContent>
           </Select>
         ) : type === "location" ? (
-          // TODO: fix and finish this 
-          <LocationSelector 
-            parentId={value?.parentId}
-            value={value?.id ?? ""}
-            onSelect={(id, data) => {
-              onChange?.(id);
-            }}
-            key={value?.id ?? ""}
-          />
+          <NestingLocation onSelect={onChange} initialPath={path}/>
         ) : null
       ) : type === "option" ? (
         ((currentOption = options.filter(
@@ -923,7 +932,7 @@ function InfoRow({
                 : type === "date"
                   ? value.toLocaleString()
                   : type === "location"
-                    ? value.name
+                    ? (path ? <StaticLocationBreadcrumb path={path} /> : " – ")
                     : null}
         </p>
       )}

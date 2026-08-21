@@ -13,7 +13,7 @@ import { AssetDataRows } from "@/components/data-table/asset-data-rows";
 import { ManageLocationsDialog } from "@/components/data-table/manage-locations-dialog";
 import ErrorPage from "./Error";
 import { Route, Routes, useParams } from "react-router-dom";
-import LocationBreadcrumb from "@/components/Location";
+import SelectableLocationBreadcrumb from "@/components/Location";
 import ModifyItemSheet from "@/components/item-crud/ModifyItemSheet";
 import { keepPreviousData } from "@tanstack/react-query";
 import type { SortingState } from "@tanstack/react-table";
@@ -179,7 +179,7 @@ const Assets = () => {
     return (
       <div className="container mx-auto py-10 mb-10">
         <Routes>
-          <Route path="*" element={<LocationBreadcrumb />} />
+          <Route path="*" element={<SelectableLocationBreadcrumb />} />
         </Routes>
         <div className="py-10">
           <Loading />
@@ -192,7 +192,7 @@ const Assets = () => {
     return (
       <div className="container mx-auto py-10 mb-10">
         <Routes>
-          <Route path="*" element={<LocationBreadcrumb />} />
+          <Route path="*" element={<SelectableLocationBreadcrumb />} />
         </Routes>
         <ErrorPage message={error.message} />
       </div>
@@ -222,7 +222,7 @@ const Assets = () => {
       </div>
 
       <Routes>
-        <Route path="*" element={<LocationBreadcrumb />} />
+        <Route path="*" element={<SelectableLocationBreadcrumb />} />
       </Routes>
 
       <DataTable
