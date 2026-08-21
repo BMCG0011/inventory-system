@@ -90,28 +90,28 @@ export const locationRouter = router({
       mcp: {
         name: "location_getPath",
         enabled: true,
-        description: "Get a list of all locations above a given location ID"
-      }
+        description: "Get a list of all locations above a given location ID",
+      },
     })
-    .input(z.object({id: z.uuid(), limit: z.int().max(20).default(20)}))
-    .query(async ({input}) => {
+    .input(z.object({ id: z.uuid(), limit: z.int().max(20).default(20) }))
+    .query(async ({ input }) => {
       const pathAscending = [];
 
       let currentId: string = input.id;
       let count = 0;
 
       do {
-        count ++;
+        count++;
         const result = await prisma.location.findUnique({
           where: {
-            id: currentId
+            id: currentId,
           },
           include: {
             parent: true,
             children: true,
             items: true,
-          }
-        })
+          },
+        });
 
         if (!result) break;
 
@@ -120,7 +120,6 @@ export const locationRouter = router({
         if (!result.parent) break;
 
         currentId = result.parent.id;
-
       } while (currentId !== null && count < input.limit);
 
       return pathAscending.reverse();

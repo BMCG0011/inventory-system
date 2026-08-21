@@ -39,7 +39,7 @@ export function LocationSelector({
   onSelect,
   key = null,
   listPrefix = null,
-  valueText = null
+  valueText = null,
 }: LocationSelectorProps) {
   const [open, setOpen] = useState(false);
 
@@ -74,13 +74,15 @@ export function LocationSelector({
               aria-expanded={open}
               className="w-[150px] justify-between"
             >
-              {valueText ? truncateString(valueText, 12) : value && locations
-                ? truncateString(
-                    locations.find((location) => location.id === value)?.name ??
-                      "Select location",
-                    12,
-                  )
-                : "Select location"}
+              {valueText
+                ? truncateString(valueText, 12)
+                : value && locations
+                  ? truncateString(
+                      locations.find((location) => location.id === value)
+                        ?.name ?? "Select location",
+                      12,
+                    )
+                  : "Select location"}
               <ChevronsUpDown className="opacity-50" />
             </Button>
           )}

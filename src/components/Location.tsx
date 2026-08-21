@@ -310,17 +310,22 @@ export default function SelectableLocationBreadcrumb() {
   );
 }
 
-export function StaticLocationBreadcrumb({path} : {path: GetLocationPathResponse}) {
-  return <Breadcrumb>
-    <BreadcrumbList className="text-foreground sm:gap-1 text-base">
-    {path && 
-      path.map((location, index) => ( <>
-        <BreadcrumbItem>{location.name}</BreadcrumbItem>
-        {index !== path.length - 1 ? <BreadcrumbSeparator /> : null}
-      </>
-
-      ))
-    }
-    </BreadcrumbList>
-  </Breadcrumb>
+export function StaticLocationBreadcrumb({
+  path,
+}: {
+  path: GetLocationPathResponse;
+}) {
+  return (
+    <Breadcrumb>
+      <BreadcrumbList className="text-foreground sm:gap-1 text-base">
+        {path &&
+          path.map((location, index) => (
+            <>
+              <BreadcrumbItem>{location.name}</BreadcrumbItem>
+              {index !== path.length - 1 ? <BreadcrumbSeparator /> : null}
+            </>
+          ))}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
 }

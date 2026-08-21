@@ -44,7 +44,7 @@ import { CascadingLocation } from "@/components/item-crud/CascadingLocation";
 import { LocationSelector } from "@/components/item-crud/LocationSelector";
 import NestingLocation from "@/components/item-crud/NestingLocation";
 import { useLocationPath } from "@/hooks/use-location";
-import {StaticLocationBreadcrumb} from "@/components/Location";
+import { StaticLocationBreadcrumb } from "@/components/Location";
 
 interface ItemDetailsProps {
   passedId?: string;
@@ -323,7 +323,7 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                     setReactiveData({
                       ...reactiveData,
                       locationId: value ?? "",
-                    })
+                    });
                   }}
                 />
                 {/* TODO: change/update status system */}
@@ -861,9 +861,10 @@ function InfoRow({
 )) {
   let currentOption, path, isLoading;
 
-  if (type === "location") { // never changes mid-component render so conditional execution of hook is okay
+  if (type === "location") {
+    // never changes mid-component render so conditional execution of hook is okay
     const response = useLocationPath(value?.id ?? null);
-    console.log(value?.id)
+    console.log(value?.id);
     path = response.path;
     console.log(path);
     isLoading = response.isLoading;
@@ -904,7 +905,7 @@ function InfoRow({
             </SelectContent>
           </Select>
         ) : type === "location" ? (
-          <NestingLocation onSelect={onChange} initialPath={path}/>
+          <NestingLocation onSelect={onChange} initialPath={path} />
         ) : null
       ) : type === "option" ? (
         ((currentOption = options.filter(
@@ -920,20 +921,21 @@ function InfoRow({
         ))
       ) : (
         <p>
-          {value == null
-            ? " – "
-            : type === "text" || type == undefined
-              ? value
-              : type === "price"
-                ? `$${(value / 100).toFixed(2)}`.replace(
-                    /\B(?=(\d{3})+(?!\d))/g,
-                    ",",
-                  )
-                : type === "date"
-                  ? value.toLocaleString()
-                  : type === "location"
-                    ? (path ? <StaticLocationBreadcrumb path={path} /> : " – ")
-                    : null}
+          {value == null ? (
+            " – "
+          ) : type === "text" || type == undefined ? (
+            value
+          ) : type === "price" ? (
+            `$${(value / 100).toFixed(2)}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+          ) : type === "date" ? (
+            value.toLocaleString()
+          ) : type === "location" ? (
+            path ? (
+              <StaticLocationBreadcrumb path={path} />
+            ) : (
+              " – "
+            )
+          ) : null}
         </p>
       )}
     </div>
