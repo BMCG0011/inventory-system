@@ -23,6 +23,8 @@ import { Button } from "./ui/button";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/client/trpc";
+import type { inferProcedureOutput } from "@trpc/server";
+import type { AppRouter } from "@/server/api/routers/_app";
 
 interface Location {
   id: string; // UUID from database
@@ -36,7 +38,11 @@ interface ComboboxOption {
   label: string; // Location name
 }
 
-export default function LocationBreadcrumb() {
+type GetLocationPathResponse = inferProcedureOutput<
+  AppRouter["location"]["getPath"]
+>;
+
+export default function SelectableLocationBreadcrumb() {
   const [breadcrumbTrail, setBreadcrumbTrail] = useState<Location[] | null>(
     null,
   );
@@ -299,6 +305,26 @@ export default function LocationBreadcrumb() {
             </Popover>
           </BreadcrumbItem>
         </Fragment>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
+
+export function StaticLocationBreadcrumb({
+  path,
+}: {
+  path: GetLocationPathResponse;
+}) {
+  return (
+    <Breadcrumb>
+      <BreadcrumbList className="text-foreground sm:gap-1 text-base">
+        {path &&
+          path.map((location, index) => (
+            <>
+              <BreadcrumbItem>{location.name}</BreadcrumbItem>
+              {index !== path.length - 1 ? <BreadcrumbSeparator /> : null}
+            </>
+          ))}
       </BreadcrumbList>
     </Breadcrumb>
   );

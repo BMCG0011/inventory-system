@@ -15,6 +15,7 @@ import { NumberInput } from "../inputs/numeric-input";
 import { useCallback, useState } from "react";
 import { CascadingLocation } from "./CascadingLocation";
 import { createItemInput } from "@/server/schema";
+import { MoneyInput } from "../inputs/money-input";
 
 interface AddAssetFormProps {
   createItem: (
@@ -34,7 +35,7 @@ export function AddAssetForm({
     resolver: zodResolver(createItemInput),
     defaultValues: {
       name: "",
-      cost: 0,
+      costCents: undefined,
       locationId: "",
       tags: [],
     },
@@ -88,18 +89,12 @@ export function AddAssetForm({
 
         <FormField
           control={form.control}
-          name="cost"
+          name="costCents"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Cost</FormLabel>
               <FormControl>
-                <NumberInput
-                  min={1}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  thousandSeparator=","
-                  className=""
-                />
+                <MoneyInput value={field.value} onChange={field.onChange} />
               </FormControl>
               <FormMessage />
             </FormItem>

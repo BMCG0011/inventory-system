@@ -334,7 +334,7 @@ function TransactionsTab() {
     {
       accessorKey: "value",
       accessorFn: (row: TransactionRow) =>
-        ((row?.item.cost ?? 0) * (row?.quantity ?? 1)).toFixed(2),
+        ((row?.item.costCents ?? 0) * (row?.quantity ?? 1)).toFixed(2),
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Value" />
       ),

@@ -5,7 +5,7 @@ import {
 import { validateCart, type CartItem } from "./item.utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from "@/server/lib/prisma";
-import type { ItemRecord } from "@prisma/client";
+import { ItemStatus, type ItemRecord } from "@prisma/client";
 
 interface CartObject {
   ok: boolean;
@@ -40,6 +40,7 @@ export const itemCheckin = async (
 
     await prisma.$transaction(async (tx) => {
       const items = assets as CartObject[];
+      await assetStatusStored(tx, items);
       await createItemRecords(tx, ctx, items, performedByUserId, notes);
     });
 
@@ -106,4 +107,18 @@ const createItemRecords = async (
   await tx.itemRecord.createMany({
     data: itemRecordData,
   });
+};
+
+const assetStatusStored = async (
+  tx: ExtendedTransactionClient,
+  items: CartObject[],
+) => {
+  await Promise.all(
+    items.map((item) =>
+      tx.item.update({
+        where: { id: item.uuid },
+        data: { status: ItemStatus.STORED },
+      }),
+    ),
+  );
 };

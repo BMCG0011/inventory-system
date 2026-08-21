@@ -3,12 +3,15 @@
 
 import { prisma } from "@/server/lib/prisma";
 import { formatGaugeSingle } from "./format";
+import { ItemStatus } from "@prisma/client";
 
 export async function collectInventoryMetrics(): Promise<string> {
   const [
     itemsTotal,
     itemsStored,
     itemsLoaned,
+    itemsChurch,
+    itemsRepair,
     consumableAgg,
     locationsTotal,
     tagsTotal,
@@ -18,8 +21,10 @@ export async function collectInventoryMetrics(): Promise<string> {
     recordsTotal,
   ] = await Promise.all([
     prisma.item.count({ where: { deleted: false } }),
-    prisma.item.count({ where: { deleted: false, stored: true } }),
-    prisma.item.count({ where: { deleted: false, stored: false } }),
+    prisma.item.count({ where: { deleted: false, status: ItemStatus.STORED } }),
+    prisma.item.count({ where: { deleted: false, status: ItemStatus.ON_LOAN }  }),
+    prisma.item.count({ where: { deleted: false, status: ItemStatus.CHURCH_USE }  }),
+    prisma.item.count({ where: { deleted: false, status: ItemStatus.IN_REPAIR }  }),
     prisma.consumable.aggregate({ _sum: { total: true, available: true } }),
     prisma.location.count(),
     prisma.tag.count(),
@@ -50,6 +55,20 @@ export async function collectInventoryMetrics(): Promise<string> {
       "inventory_items_loaned",
       "Number of items currently on loan",
       itemsLoaned,
+    ),
+  );
+  lines.push(
+    formatGaugeSingle(
+      "inventory_items_loaned",
+      "Number of items currently in use at church",
+      itemsChurch,
+    ),
+  );
+  lines.push(
+    formatGaugeSingle(
+      "inventory_items_loaned",
+      "Number of items currently in repair",
+      itemsRepair,
     ),
   );
   lines.push(

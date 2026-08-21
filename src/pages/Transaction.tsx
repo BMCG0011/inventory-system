@@ -179,7 +179,7 @@ export default function Transactions() {
     {
       accessorKey: "value",
       accessorFn: (row: GetItemRecordsOutput) =>
-        ((row?.item.cost ?? 0) * (row?.quantity ?? 1)).toFixed(2),
+        ((row?.item.costCents ?? 0) * (row?.quantity ?? 1)).toFixed(2),
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Value" />
       ),

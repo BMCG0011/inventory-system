@@ -87,21 +87,49 @@ model ConsumableRequest {
     @@index([supplierId])
 }
 
+enum ItemStatus {
+    CHURCH_USE
+    STORED
+    IN_REPAIR
+    DISPOSED_OF
+    ON_LOAN
+}
+
 model Item {
+    // Deprecated / Possibly deprecated
+    cost        Int         @default(0)
+    stored      Boolean     @default(true)
+
+    // Technical Info
     id          String       @id @default(uuid())
     serial      String       @unique
-    image       String?
-    name        String
-    location    Location     @relation(fields: [locationId], references: [id])
+
+    // Item description
+    image           String?
+    name            String
+    manufacturer    String?
+    model           String?
+    itemSerial      String?
+    tags            Tag[]
+
+    // Location
+    location    Location        @relation(fields: [locationId], references: [id])
     locationId  String
-    stored      Boolean      @default(true)
-    tags        Tag[]
-    cost        Int          @default(0)
+    status      ItemStatus      @default(STORED)
+
+    // Purchase Info
+    costCents               Int?
+    depreciatedValueCents   Int?
+    purchasedAt             DateTime?
+    warranty                String?
+
+    // Technical info/history
     createdAt   DateTime     @default(now())
     updatedAt   DateTime     @updatedAt
     consumable  Consumable?  @relation(name: "ItemToConsumable")
     ItemRecords ItemRecord[] @relation("ItemToItemRecord")
     deleted     Boolean      @default(false)
+
     notes                String?
     notesUpdatedBy       User?     @relation("ItemNotesUpdatedBy", fields: [notesUpdatedByUserId], references: [id])
     notesUpdatedByUserId String?
@@ -165,27 +193,27 @@ model ItemRecord {
 }
 
 model User {
-    id            String       @id @default(uuid())
-    name          String
-    email         String       @unique
-    emailVerified Boolean
-    image         String?
-    group         Group?       @relation(fields: [groupId], references: [id])
-    groupId       String?
-    createdAt     DateTime     @default(now())
-    updatedAt     DateTime     @updatedAt
-    sessions      Session[]
-    accounts      Account[]
-    ItemRecords        ItemRecord[] @relation("UserToItemRecord")
-    PerformedRecords   ItemRecord[] @relation("AdminPerformedItemRecord")
-    ItemNotesUpdated   Item[]       @relation("ItemNotesUpdatedBy")
-    SuppliersCreated      ConsumableSupplier[] @relation("SupplierCreatedBy")
-    ConsumableRequests    ConsumableRequest[]  @relation("RequestRequestedBy")
-    ConsumablePurchases   ConsumableRequest[]  @relation("RequestPurchasedBy")
-    Notifications         Notification[]       @relation("UserNotifications")
-    AuditLogs             AuditLog[]           @relation("AuditActor")
+    id                      String                  @id @default(uuid())
+    name                    String
+    email                   String                  @unique
+    emailVerified           Boolean
+    image                   String?
+    group                   Group?                  @relation(fields: [groupId], references: [id])
+    groupId                 String?
+    createdAt               DateTime                @default(now())
+    updatedAt               DateTime                @updatedAt
+    sessions                Session[]
+    accounts                Account[]
+    ItemRecords             ItemRecord[]            @relation("UserToItemRecord")
+    PerformedRecords        ItemRecord[]            @relation("AdminPerformedItemRecord")
+    ItemNotesUpdated        Item[]                  @relation("ItemNotesUpdatedBy")
+    SuppliersCreated        ConsumableSupplier[]    @relation("SupplierCreatedBy")
+    ConsumableRequests      ConsumableRequest[]     @relation("RequestRequestedBy")
+    ConsumablePurchases     ConsumableRequest[]     @relation("RequestPurchasedBy")
+    Notifications           Notification[]          @relation("UserNotifications")
+    AuditLogs               AuditLog[]              @relation("AuditActor")
 
-    role             String    @default("user")
+    role             String     @default("user")
     banned           Boolean?
     banReason        String?
     banExpires       DateTime?

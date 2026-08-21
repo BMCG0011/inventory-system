@@ -20,7 +20,7 @@ export const itemRouter = router({
         ...(input.id ? { id: input.id } : {}),
         name: input.name,
         locationId: input.locationId,
-        cost: input.cost,
+        costCents: input.costCents,
         consumable: input.consumable
           ? {
               create: {
@@ -87,40 +87,41 @@ export const itemRouter = router({
       const { id, locationId, consumable, tags, ...rest } = input;
       const itemData = { ...rest };
 
-      // Only admins can modify the storage/lab-use state.
+      // Restrict some editing to admins (currently unused)
       if (ctx.user.role !== "admin") {
-        delete itemData.stored;
+        // delete itemData.stored;
       }
 
       return await prisma.$transaction(async (tx) => {
-        const existingItem = await tx.item.findUnique({
-          where: { id },
-          select: {
-            consumable: { select: { id: true } },
-            ItemRecords: {
-              orderBy: { createdAt: "desc" },
-              take: 1,
-            },
-          },
-        });
+        // const existingItem = await tx.item.findUnique({
+        //   where: { id },
+        //   select: {
+        //     consumable: { select: { id: true } },
+        //     ItemRecords: {
+        //       orderBy: { createdAt: "desc" },
+        //       take: 1,
+        //     },
+        //   },
+        // });
 
-        const latestRecord = existingItem?.ItemRecords[0];
-        const shouldAutoCheckin =
-          ctx.user.role === "admin" &&
-          itemData.stored === false &&
-          existingItem?.consumable == null &&
-          latestRecord?.loaned === true;
+        // const latestRecord = existingItem?.ItemRecords[0];
+        // TODO: figure out what this was doing
+        // const shouldAutoCheckin =
+        //   ctx.user.role === "admin" &&
+        //   itemData.stored === false &&
+        //   existingItem?.consumable == null &&
+        //   latestRecord?.loaned === true;
 
-        if (shouldAutoCheckin) {
-          await tx.itemRecord.create({
-            data: {
-              loaned: false,
-              actionByUserId: ctx.user.id,
-              itemId: id,
-              quantity: 1,
-            },
-          });
-        }
+        // if (shouldAutoCheckin) {
+        //   await tx.itemRecord.create({
+        //     data: {
+        //       loaned: false,
+        //       actionByUserId: ctx.user.id,
+        //       itemId: id,
+        //       quantity: 1,
+        //     },
+        //   });
+        // }
 
         const upsertTags = await Promise.all(
           tags.map(async (tag) => {
