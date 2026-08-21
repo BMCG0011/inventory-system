@@ -40,8 +40,6 @@ import {
 } from "@/components/ui/select";
 import { ItemStatus, type Location } from "@prisma/client";
 import { itemStatusBadgeConfig } from "@/lib/item-status";
-import { CascadingLocation } from "@/components/item-crud/CascadingLocation";
-import { LocationSelector } from "@/components/item-crud/LocationSelector";
 import NestingLocation from "@/components/item-crud/NestingLocation";
 import { useLocationPath } from "@/hooks/use-location";
 import { StaticLocationBreadcrumb } from "@/components/Location";
@@ -859,15 +857,12 @@ function InfoRow({
       options?: undefined;
     }
 )) {
-  let currentOption, path, isLoading;
+  let currentOption, path;
 
   if (type === "location") {
     // never changes mid-component render so conditional execution of hook is okay
     const response = useLocationPath(value?.id ?? null);
-    console.log(value?.id);
     path = response.path;
-    console.log(path);
-    isLoading = response.isLoading;
   }
 
   return (
