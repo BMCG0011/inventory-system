@@ -121,3 +121,15 @@ services:
 volumes:
   postgres_data:
   minio_data:
+
+networks:
+  # Traffic to this host traverses a Tailscale (WireGuard) tunnel, whose MTU
+  # (typically 1280) is well below Docker's default bridge MTU of 1500.
+  # Without clamping, large responses (JS/CSS bundles) get sent as oversized
+  # packets that are silently dropped once they hit the tunnel, causing
+  # gateway timeouts / corrupted content — while small responses (health
+  # checks, API replies) are unaffected. This keeps the project's containers
+  # from ever emitting packets larger than the tunnel can carry.
+  default:
+    driver_opts:
+      com.docker.network.driver.mtu: 1280
