@@ -44,7 +44,7 @@ COPY --from=builder /app/vite.config.ts .
 COPY package.json .
 
 # Expose port
-EXPOSE 4173
+EXPOSE 3000
 
 # Set environment (adjust DATABASE_URL in your deployment)
 ENV NODE_ENV=production

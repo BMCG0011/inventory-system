@@ -215,10 +215,7 @@ The system exposes a Model Context Protocol (MCP) endpoint at `/mcp` for AI inte
 docker-compose up --build
 ```
 
-The application will be available at:
-
-- Frontend: http://localhost:4173
-- Backend: http://localhost:3000
+The application (frontend and backend) will be available at http://localhost:3000
 
 ## Development
 

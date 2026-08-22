@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 import { Hono } from "hono";
+import { serveStatic } from "hono/bun";
 import { cors } from "hono/cors";
 import { trpcServer } from "@hono/trpc-server";
 import { appRouter } from "@/server/api/routers/_app";
@@ -83,7 +84,11 @@ app.use(
     }),
 );
 
-//app.use('/*', serveStatic({ root: './dist' })); // Add this to serve dist/
+// Serve the built frontend directly (replaces the old vite-preview process,
+// which isn't meant for production use and was hanging under concurrent
+// asset requests, causing 504s / blank pages). Falls through via next() for
+// any path that isn't a real file in dist/, so API routes below still work.
+app.use("/*", serveStatic({ root: "./dist" }));
 
 // Handle authentication routes
 app.on(["POST", "GET"], "/api/auth/*", async (c) => {
@@ -122,7 +127,6 @@ app.use(
     }),
 );
 
-//app.get('*', serveStatic({ path: './dist/index.html' }));
 // Global error handler
 app.onError((err, c) => {
     if (err instanceof HTTPException) {
@@ -531,6 +535,12 @@ if (metricsEnabled) {
         }
     });
 }
+
+// ─── SPA fallback ─────────────────────────────────────────────────────────────
+// Must be the last route registered: it's a terminal wildcard handler, so
+// anything registered after it would never be reached. Serves index.html for
+// client-side routes (e.g. /items/123) that don't correspond to a real file.
+app.get("*", serveStatic({ path: "./dist/index.html" }));
 
 export default {
     port: process.env.PORT ?? 3000,

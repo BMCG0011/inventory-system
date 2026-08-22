@@ -88,6 +88,10 @@ Four tRPC procedure tiers in `src/server/trpc.ts`:
 - Date fields (e.g. `purchasedAt`) use the `DatePicker`/`Calendar` components (`src/components/ui/`), backed by `date-fns` + `react-day-picker`
 - `Location` is self-referential (`parentId`/`children`) for nested storage locations. `location.getPath` (tRPC) walks a location up to its root; the `useLocationPath` hook (`src/hooks/use-location.ts`) wraps it. Drill-down location pickers live in `src/components/item-crud/` (`LocationSelector`, `NestingLocation`, `CascadingLocation`)
 
+### Production deployment
+
+In production (Dockerfile / `bun run start`), the Hono backend on :3000 serves the built frontend directly via `hono/bun`'s `serveStatic` (mounted in `server/index.ts`), and Traefik points at that single port. Do not reintroduce `vite preview` as a production static server — it isn't designed for that and was observed hanging under concurrent asset requests (504s / blank pages with a disallowed-MIME-type console error). The SPA fallback route (`app.get("*", serveStatic({ path: "./dist/index.html" }))`) must stay the last route registered in `server/index.ts`, since it's a terminal wildcard handler that would otherwise shadow any route registered after it.
+
 ### Infrastructure
 
 - **PostgreSQL** on port 5435 (Docker), managed by Prisma

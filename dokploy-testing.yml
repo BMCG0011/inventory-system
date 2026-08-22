@@ -60,7 +60,6 @@ services:
       OLLAMA_MODEL: ${OLLAMA_MODEL:-}
       OLLAMA_AUTH_TOKEN: ${OLLAMA_AUTH_TOKEN:-}
     healthcheck:
-      # Check the Hono backend directly — vite preview does not expose /health
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
@@ -71,8 +70,8 @@ services:
       - "traefik.http.routers.inventory.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.inventory.entrypoints=websecure"
       - "traefik.http.routers.inventory.tls.certresolver=letsencrypt"
-      # Port 4173 is vite preview; it proxies /api, /mcp, /metrics to :3000
-      - "traefik.http.services.inventory.loadbalancer.server.port=4173"
+      # The Hono backend serves both the API and the built frontend
+      - "traefik.http.services.inventory.loadbalancer.server.port=3000"
 
   db:
     image: postgres:15-alpine
