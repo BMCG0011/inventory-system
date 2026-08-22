@@ -66,7 +66,7 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
   const updateItem = trpc.item.update.useMutation({
     onSuccess: () => {
       setIsEditMode(false);
-      refetch();
+      refetch().catch(() => toast.error("Failed to fetch item details"));
       toast.success("Successfully updated item details");
     },
     onError: (err) => {
@@ -598,7 +598,6 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                   Object.entries(reactiveData).filter(([_, v]) => v != null),
                 );
                 if (!processedData) return;
-                processedData;
                 updateItem.mutate({
                   ...processedData,
                   name: reactiveData.name,
@@ -858,11 +857,10 @@ function InfoRow({
 )) {
   let currentOption, path;
 
-  if (type === "location") {
-    // never changes mid-component render so conditional execution of hook is okay
-    const response = useLocationPath(value?.id ?? null);
-    path = response.path;
-  }
+  const response = useLocationPath(
+    type === "location" ? (value?.id ?? null) : null,
+  );
+  path = response.path;
 
   return (
     <div>

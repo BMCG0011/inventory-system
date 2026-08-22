@@ -22,10 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import type React from "react";
 import { Route, Routes } from "react-router-dom";
 import ItemDetails from "@/pages/ItemDetails";
-import {
-  ItemStatus,
-  getItemStatusBadgeConfig,
-} from "@/lib/item-status";
+import { ItemStatus, getItemStatusBadgeConfig } from "@/lib/item-status";
 import { ItemStatusBadge } from "@/components/item-crud/itemStatusBadge";
 
 type GetItemsOutput = inferProcedureOutput<
@@ -212,7 +209,7 @@ function Items({
           id: "status",
           header: () => "Status",
           cell: ({ row }) => {
-            return <ItemStatusBadge status={row.original.status}/> 
+            return <ItemStatusBadge status={row.original.status} />;
           },
         },
     {

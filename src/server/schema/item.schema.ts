@@ -3,7 +3,7 @@ import type { inferProcedureOutput } from "@trpc/server";
 import type { itemRouter } from "@/server/api/routers/item";
 import { consumableInput, createConsumableInput } from "./consumable.schema";
 import { tagInput } from "./tag.schema";
-import {ItemStatusSchema} from "@/prisma-zod/schemas/enums/ItemStatus.schema"
+import { ItemStatusSchema } from "@/prisma-zod/schemas/enums/ItemStatus.schema";
 
 export const itemInput = z.object({
   // technical info

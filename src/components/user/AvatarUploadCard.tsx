@@ -83,7 +83,7 @@ export function AvatarUploadCard() {
       }
 
       await authClient.updateUser({ image: avatarProxyUrl(user.id) });
-      await refetch();
+      refetch();
       setCropSrc(null);
       toast.success("Avatar updated");
     } catch (err) {
@@ -104,7 +104,7 @@ export function AvatarUploadCard() {
       if (!res.ok) throw new Error("Remove failed");
 
       await authClient.updateUser({ image: null });
-      await refetch();
+      refetch();
       toast.success("Avatar removed");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Remove failed");

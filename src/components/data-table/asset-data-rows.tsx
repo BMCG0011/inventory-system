@@ -24,10 +24,7 @@ import type { AppRouter } from "@/server/api/routers/_app";
 import type React from "react";
 import { Route, Routes } from "react-router-dom";
 import ItemDetails from "@/pages/ItemDetails";
-import {
-  ItemStatus,
-  getItemStatusBadgeConfig,
-} from "@/lib/item-status";
+import { ItemStatus, getItemStatusBadgeConfig } from "@/lib/item-status";
 import { ItemStatusBadge } from "../item-crud/itemStatusBadge";
 
 type Item = inferProcedureOutput<AppRouter["item"]["list"]>["items"][number];
@@ -156,7 +153,7 @@ function AssetChildRow({
 
       {/* status */}
       <TableCell className="pl-10">
-        <ItemStatusBadge status={item.status} /> 
+        <ItemStatusBadge status={item.status} />
       </TableCell>
 
       {/* actions */}
