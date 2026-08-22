@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logoHorizontalDark from "@/assets/Horizontal White & Blue.svg";
 import logoHorizontalLight from "@/assets/Horizontal Black & Blue.svg";
@@ -14,7 +13,6 @@ import {
   FileText,
   ScrollText,
   Users,
-  ChevronDown,
 } from "lucide-react";
 import { authClient } from "@/auth/client";
 import { trpc } from "@/client/trpc";
@@ -43,7 +41,6 @@ const coreItems = [
 ];
 
 export function AppSidebar() {
-  const [adminOpen, setAdminOpen] = useState(false);
   const { itemCount } = useCart();
   const navigate = useNavigate();
   const { data: session } = authClient.useSession();
@@ -82,7 +79,13 @@ export function AppSidebar() {
                 {coreItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a onClick={() => void navigate(item.url)}>
+                      <a
+                        onClick={(event) => (
+                          event.preventDefault(),
+                          void navigate(item.url)
+                        )}
+                        href="#"
+                      >
                         <item.icon />
                         <span>{item.title}</span>
                       </a>
@@ -93,7 +96,11 @@ export function AppSidebar() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <a
-                      onClick={() => void navigate("/my-requests")}
+                      onClick={(event) => (
+                        event.preventDefault(),
+                        void navigate("/my-requests")
+                      )}
+                      href="#"
                       className="flex items-center gap-2"
                     >
                       <FileText />
@@ -110,61 +117,55 @@ export function AppSidebar() {
 
               {/* Administration group — admins only */}
               {isAdmin && (
-                <div className="mt-2">
-                  <button
-                    onClick={() => setAdminOpen((o) => !o)}
-                    className="flex w-full items-center justify-between px-2 py-1 text-xs font-medium text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
-                  >
-                    <span className="uppercase tracking-wider">
-                      Administration
-                    </span>
-                    <ChevronDown
-                      className={cn(
-                        "h-3 w-3 transition-transform duration-200",
-                        !adminOpen && "-rotate-90",
-                      )}
-                    />
-                  </button>
-                  {adminOpen && (
-                    <SidebarMenu className="mt-0.5">
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                          <a
-                            onClick={() =>
-                              void navigate("/consumables/requests")
-                            }
-                            className="flex items-center gap-2"
-                          >
-                            <ClipboardList />
-                            <span>Requests</span>
-                            {pendingRequestCount && pendingRequestCount > 0 ? (
-                              <span className="ml-auto h-5 min-w-5 rounded-full bg-amber-500/20 px-1.5 text-xs font-semibold text-amber-700 dark:text-amber-200 leading-5 text-center tabular-nums">
-                                {pendingRequestCount}
-                              </span>
-                            ) : null}
-                          </a>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                          <a
-                            onClick={() => void navigate("/members")}
-                            className="flex items-center gap-2"
-                          >
-                            <Users />
-                            <span>Members</span>
-                          </a>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    </SidebarMenu>
-                  )}
-                </div>
+                <SidebarMenu collapsible={true} label="Administration">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a
+                        onClick={(event) => (
+                          event.preventDefault(),
+                          void navigate("/consumables/requests")
+                        )}
+                        href="#"
+                        className="flex items-center gap-2"
+                      >
+                        <ClipboardList />
+                        <span>Requests</span>
+                        {pendingRequestCount && pendingRequestCount > 0 ? (
+                          <span className="ml-auto h-5 min-w-5 rounded-full bg-amber-500/20 px-1.5 text-xs font-semibold text-amber-700 dark:text-amber-200 leading-5 text-center tabular-nums">
+                            {pendingRequestCount}
+                          </span>
+                        ) : null}
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a
+                        onClick={(event) => (
+                          event.preventDefault(),
+                          void navigate("/members")
+                        )}
+                        href="#"
+                        className="flex items-center gap-2"
+                      >
+                        <Users />
+                        <span>Members</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
               )}
 
               <SidebarMenu className="mt-2">
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a onClick={() => void navigate("/settings")}>
+                    <a
+                      onClick={(event) => (
+                        event.preventDefault(),
+                        void navigate("/settings")
+                      )}
+                      href="#"
+                    >
                       <Settings />
                       <span>Settings</span>
                     </a>
@@ -177,7 +178,11 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <a
-                    onClick={() => void navigate("/cart")}
+                    onClick={(event) => (
+                      event.preventDefault(),
+                      void navigate("/cart")
+                    )}
+                    href="#"
                     className={cn(
                       "flex items-center gap-2 rounded-md transition-all",
                       itemCount > 0 &&
