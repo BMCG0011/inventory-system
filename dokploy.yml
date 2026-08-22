@@ -4,6 +4,14 @@
 # this file as the compose path. Then configure all required environment
 # variables listed below in the Dokploy project settings.
 #
+# Domain routing (host, TLS, certresolver, container port) is configured via
+# Dokploy's Domains GUI for this app — service "app", container port 3000 —
+# rather than hardcoded Traefik labels here. Hardcoded router/service names
+# are scoped globally by Traefik's Docker provider, not per Dokploy project,
+# so two deployments both naming themselves e.g. "inventory" can silently
+# merge into one shared load-balanced backend; the GUI avoids this by
+# generating unique names per deployment (via Isolated Deployment).
+#
 # REQUIRED variables — must be set before first deploy:
 #   DOMAIN                 e.g. inventory.example.com
 #   POSTGRES_PASSWORD      strong random password
@@ -65,13 +73,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 90s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.inventory.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.inventory.entrypoints=websecure"
-      - "traefik.http.routers.inventory.tls.certresolver=letsencrypt"
-      # The Hono backend serves both the API and the built frontend
-      - "traefik.http.services.inventory.loadbalancer.server.port=3000"
 
   db:
     image: postgres:15-alpine

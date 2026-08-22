@@ -90,7 +90,9 @@ Four tRPC procedure tiers in `src/server/trpc.ts`:
 
 ### Production deployment
 
-In production (Dockerfile / `bun run start`), the Hono backend on :3000 serves the built frontend directly via `hono/bun`'s `serveStatic` (mounted in `server/index.ts`), and Traefik points at that single port. Do not reintroduce `vite preview` as a production static server — it isn't designed for that and was observed hanging under concurrent asset requests (504s / blank pages with a disallowed-MIME-type console error). The SPA fallback route (`app.get("*", serveStatic({ path: "./dist/index.html" }))`) must stay the last route registered in `server/index.ts`, since it's a terminal wildcard handler that would otherwise shadow any route registered after it.
+In production (Dockerfile / `bun run start`), the Hono backend on :3000 serves the built frontend directly via a small `Bun.file()`-based handler in `server/index.ts` (`serveFromDist`) — not `hono/bun`'s `serveStatic`, which was silently failing to match nested `/assets/*` paths and falling through to the SPA fallback for every asset request. Do not reintroduce `vite preview` as a production static server either — it isn't designed for that and was separately observed hanging under concurrent asset requests. The SPA fallback route (`app.get("*", () => serveFromDist("index.html"))`) must stay the last route registered in `server/index.ts`, since it's a terminal wildcard handler that would otherwise shadow any route registered after it.
+
+Domain/TLS routing for each Dokploy deployment (production `dokploy.yml`, testing `dokploy-testing.yml`) is configured via Dokploy's **Domains GUI** (service `app`, container port 3000), not hardcoded Traefik labels in the compose files. Traefik's Docker provider scopes router/service names *globally*, not per Dokploy project — two deployments both hardcoding the same name (e.g. `inventory`) can silently merge into one shared load-balanced backend, which caused production and testing traffic to intermittently cross for an extended period. Enable **Isolated Deployment** for every app in Dokploy to avoid this.
 
 ### Infrastructure
 
