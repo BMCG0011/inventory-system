@@ -25,7 +25,7 @@ export function AddConsumableForm({ createItem }: AddConsumableFormProps) {
     resolver: zodResolver(createItemInput),
     defaultValues: {
       name: "",
-      cost: 0,
+      costCents: 0,
       locationId: "",
       tags: [],
       consumable: {
@@ -113,7 +113,7 @@ export function AddConsumableForm({ createItem }: AddConsumableFormProps) {
 
           <FormField
             control={form.control}
-            name="cost"
+            name="costCents"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Cost</FormLabel>

@@ -94,6 +94,7 @@ export default function ModifyItemForm({
     },
   });
 
+  // TODO: fix this
   const form = useForm<z.infer<typeof updateItemInput>>({
     resolver: zodResolver(updateItemInput),
     defaultValues: {
@@ -278,7 +279,7 @@ export default function ModifyItemForm({
 
           <FormField
             control={form.control}
-            name="cost"
+            name="costCents"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Cost</FormLabel>

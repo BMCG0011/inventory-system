@@ -1,13 +1,13 @@
 import { validate as isValidUUID } from "uuid";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/ui/badge";
 import { QRCodeCanvas } from "qrcode.react";
 import { trpc } from "@/client/trpc";
 import ErrorPage from "./Error";
 import Loading from "@/components/misc/loading";
 import { ImageZoom } from "@/components/ui/image-zoom";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import RestockForm from "@/components/item-crud/RestockForm";
 import { AdminAssignCard } from "@/components/item-crud/AdminAssignCard";
@@ -27,6 +27,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
+import { MoneyInput } from "@/components/inputs/money-input";
+import type { VariantProps } from "class-variance-authority";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ItemStatus, type Location } from "@prisma/client";
+import { itemStatusBadgeConfig } from "@/lib/item-status";
+import NestingLocation from "@/components/item-crud/NestingLocation";
+import { useLocationPath } from "@/hooks/use-location";
+import { StaticLocationBreadcrumb } from "@/components/Location";
 
 interface ItemDetailsProps {
   passedId?: string;
@@ -40,11 +56,23 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
   const itemId = passedId ?? id;
 
   const [isImgLoading, setIsImgLoading] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showGroupDialog, setShowGroupDialog] = useState(false);
   const [showDeleteGroupDialog, setShowDeleteGroupDialog] = useState(false);
   const [isApplyingToGroup, setIsApplyingToGroup] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const updateItem = trpc.item.update.useMutation({
+    onSuccess: () => {
+      setIsEditMode(false);
+      refetch();
+      toast.success("Successfully updated item details");
+    },
+    onError: (err) => {
+      toast.error(`Failed to update item: ${err.message}`);
+    },
+  });
 
   // Use effectiveId for your logic
 
@@ -59,9 +87,16 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
       id: itemId,
     },
   );
+
   const { data, isLoading, error, refetch } = trpc.item.get.useQuery({
     id: itemId,
   });
+
+  const [reactiveData, setReactiveData] = useState<typeof data>(undefined);
+
+  useEffect(() => {
+    setReactiveData(data);
+  }, [JSON.stringify(data)]);
 
   const { data: imageUrl, refetch: refetchImage } =
     trpc.item.getImageUrl.useQuery({ id: itemId }, { enabled: !!data?.image });
@@ -179,7 +214,7 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
   if (error) {
     return <ErrorPage title="Error Finding Item" message={error.message} />;
   }
-  if (!data) {
+  if (!reactiveData) {
     return (
       <ErrorPage
         title="Could Not Find Item"
@@ -188,12 +223,9 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
     );
   }
 
-  const latestRecord = data.ItemRecords?.slice().sort(
+  const latestRecord = reactiveData.ItemRecords?.slice().sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   )[0];
-  const isLabUse = data.stored === false;
-  const isInUse = latestRecord?.loaned ?? false;
-  const statusLabel = isLabUse ? "Lab Use" : isInUse ? "On Loan" : "In Storage";
 
   return (
     <div className="p-2 max-w-6xl mx-auto space-y-2">
@@ -202,15 +234,27 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
-              <CardTitle className="text-2xl">{data?.name}</CardTitle>
+              <CardTitle className="text-2xl">{reactiveData?.name}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Serial: {data?.serial}
+                Serial: {reactiveData?.serial}
               </p>
+              {session?.user.role === "admin" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mb-2 mt-2"
+                  title="Modify item"
+                  onClick={() => setIsEditMode(true)}
+                >
+                  <Pencil className="h-3.5 w-3.5 mr-1" />
+                  Edit Asset
+                </Button>
+              )}
             </div>
 
             {/* Image next to Serial */}
             <div className="flex flex-col items-end gap-2">
-              {data?.image && (
+              {reactiveData?.image && (
                 <div className="relative h-24 w-24">
                   {isImgLoading && (
                     <Skeleton className="h-full w-full rounded-md bg-muted" />
@@ -220,7 +264,7 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                       <img
                         loading="lazy"
                         src={imageUrl}
-                        alt={`${data.name} preview`}
+                        alt={`${reactiveData.name} preview`}
                         className={`max-h-24 rounded-md object-contain border ${isImgLoading ? "opacity-0" : "opacity-100"} transition-opacity`}
                         onLoad={() => setIsImgLoading(false)}
                         onError={() => setIsImgLoading(false)}
@@ -245,9 +289,9 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <Upload className="h-3.5 w-3.5 mr-1" />
-                    {data?.image ? "Replace" : "Upload Image"}
+                    {reactiveData?.image ? "Replace" : "Upload Image"}
                   </Button>
-                  {data?.image && (
+                  {reactiveData?.image && (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -265,47 +309,154 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
             {/* Basic Information */}
             <Section title="Details">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
-                <InfoRow label="ID" value={data?.id} />
+                <InfoRow label="ID" value={reactiveData?.id} />
                 <InfoRow
                   label="Location"
-                  value={data?.location?.name ?? "N/A"}
+                  value={reactiveData?.location}
+                  type="location"
+                  isEditMode={isEditMode}
+                  editable={true}
+                  onChange={(value) => {
+                    setReactiveData({
+                      ...reactiveData,
+                      locationId: value ?? "",
+                    });
+                  }}
                 />
+                {/* TODO: change/update status system */}
                 <InfoRow
                   label="Status"
-                  value={
-                    <Badge
-                      variant={
-                        isLabUse
-                          ? "default"
-                          : isInUse
-                            ? "destructive"
-                            : "secondary"
-                      }
-                      className={
-                        isLabUse
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
-                          : ""
-                      }
-                    >
-                      {statusLabel}
-                    </Badge>
-                  }
+                  value={reactiveData?.status}
+                  type="option"
+                  options={itemStatusBadgeConfig}
+                  isEditMode={isEditMode}
+                  editable={reactiveData?.status !== "ON_LOAN"}
+                  onChange={(value) => {
+                    setReactiveData({
+                      ...reactiveData,
+                      status: (value as ItemStatus) ?? reactiveData.status,
+                    });
+                  }}
                 />
-                {isInUse && latestRecord?.actionBy && (
-                  <InfoRow
-                    label="Loaned To"
-                    value={latestRecord.actionBy.name}
-                  />
-                )}
-                <InfoRow label="Cost" value={`$${data?.cost}`} />
+                {reactiveData.status === ItemStatus.ON_LOAN &&
+                  latestRecord?.actionBy && (
+                    <InfoRow
+                      label="Loaned To"
+                      value={latestRecord.actionBy.name}
+                    />
+                  )}
+              </div>
+            </Section>
+
+            <Section title="Description">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                <InfoRow
+                  label="Name"
+                  value={reactiveData?.name}
+                  isEditMode={isEditMode}
+                  type="text"
+                  onChange={(value) => {
+                    setReactiveData({
+                      ...reactiveData,
+                      name: value ?? reactiveData.name,
+                    });
+                  }}
+                />
+                <InfoRow
+                  label="Manufacturer"
+                  value={reactiveData?.manufacturer}
+                  isEditMode={isEditMode}
+                  type="text"
+                  onChange={(value) => {
+                    setReactiveData({
+                      ...reactiveData,
+                      manufacturer: value ?? null,
+                    });
+                  }}
+                />
+                <InfoRow
+                  label="Model"
+                  value={reactiveData?.model}
+                  isEditMode={isEditMode}
+                  type="text"
+                  onChange={(value) => {
+                    setReactiveData({ ...reactiveData, model: value ?? null });
+                  }}
+                />
+                <InfoRow
+                  label="Product Serial"
+                  value={reactiveData?.itemSerial}
+                  isEditMode={isEditMode}
+                  type="text"
+                  onChange={(value) => {
+                    setReactiveData({
+                      ...reactiveData,
+                      itemSerial: value ?? null,
+                    });
+                  }}
+                />
+              </div>
+            </Section>
+
+            <Section title="Purchase Information">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                <InfoRow
+                  label="Cost"
+                  value={reactiveData?.costCents}
+                  isEditMode={isEditMode}
+                  type="price"
+                  onChange={(value) => {
+                    setReactiveData({
+                      ...reactiveData,
+                      costCents: value ?? null,
+                    });
+                  }}
+                />
+                <InfoRow
+                  label="Depreciated Value"
+                  value={reactiveData?.depreciatedValueCents}
+                  isEditMode={isEditMode}
+                  type="price"
+                  onChange={(value) => {
+                    setReactiveData({
+                      ...reactiveData,
+                      depreciatedValueCents: value ?? null,
+                    });
+                  }}
+                />
+                <InfoRow
+                  label="Purchase Date"
+                  value={reactiveData?.purchasedAt}
+                  type="date"
+                  isEditMode={isEditMode}
+                  onChange={(value) => {
+                    setReactiveData({
+                      ...reactiveData,
+                      purchasedAt: value ?? null,
+                    });
+                  }}
+                />
+                <InfoRow
+                  label="Warranty"
+                  value={reactiveData?.warranty}
+                  isEditMode={isEditMode}
+                  type="text"
+                  onChange={(value) => {
+                    setReactiveData({
+                      ...reactiveData,
+                      warranty: value ?? null,
+                    });
+                  }}
+                />
               </div>
             </Section>
 
             {/* Tags */}
+            {/* TODO: add editing functionality here */}
             <Section title="Tags">
               <div className="flex flex-wrap gap-2 mt-2">
-                {data?.tags.length ? (
-                  data.tags.map((tag, i) => (
+                {reactiveData?.tags.length ? (
+                  reactiveData.tags.map((tag, i) => (
                     <Badge key={i} variant="outline">
                       {tag.name}
                     </Badge>
@@ -321,16 +472,16 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
             {/* Combined Consumable & Additional Info Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Consumable Info */}
-              {data?.consumable && (
+              {reactiveData?.consumable && (
                 <Section title="Consumable Info">
                   <div className="space-y-2">
                     <InfoRow
                       label="Available Stock"
-                      value={data.consumable.available}
+                      value={reactiveData.consumable.available}
                     />
                     <InfoRow
                       label="Total Quantity"
-                      value={data.consumable.total}
+                      value={reactiveData.consumable.total}
                     />
                   </div>
                 </Section>
@@ -339,24 +490,24 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
               {/* Additional Info (fills empty space) 
                             <Section title="Additional Information">
                                 <div className="space-y-2">
-                                    <InfoRow label="Category" value={data?.category ?? 'N/A'} />
-                                    <InfoRow label="Notes" value={data?.notes ?? 'None'} />
+                                    <InfoRow label="Category" value={reactiveData?.category ?? 'N/A'} />
+                                    <InfoRow label="Notes" value={reactiveData?.notes ?? 'None'} />
                                 </div>
                             </Section>*/}
             </div>
             {/* Notes */}
-            <ItemNotes itemId={itemId} data={data} onSaved={refetch} />
+            <ItemNotes itemId={itemId} data={reactiveData} onSaved={refetch} />
 
             {/* Timestamps */}
             <Section title="Timestamps">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                 <InfoRow
                   label="Created At"
-                  value={new Date(data.createdAt).toLocaleString()}
+                  value={new Date(reactiveData.createdAt).toLocaleString()}
                 />
                 <InfoRow
                   label="Last Updated"
-                  value={new Date(data.updatedAt).toLocaleString()}
+                  value={new Date(reactiveData.updatedAt).toLocaleString()}
                 />
               </div>
             </Section>
@@ -387,26 +538,25 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                 </div>
               )}
               <p className="text-sm text-muted-foreground mt-2 break-all text-center">
-                {data.id}
+                {reactiveData.id}
               </p>
             </CardContent>
           </Card>
 
-          {session?.user.role === "admin" && data.consumable && (
+          {session?.user.role === "admin" && reactiveData.consumable && (
             <Card>
               <CardHeader>
                 <CardTitle>Restock</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center">
-                <RestockForm item={data} callback={onRestock} />
+                <RestockForm item={reactiveData} callback={onRestock} />
               </CardContent>
             </Card>
           )}
 
           {session?.user.role === "admin" &&
-            !data.consumable &&
-            !isLabUse &&
-            !isInUse && (
+            !reactiveData.consumable &&
+            reactiveData.status === ItemStatus.STORED && (
               <AdminAssignCard
                 itemId={itemId}
                 onSuccess={async () => {
@@ -417,9 +567,8 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
             )}
 
           {session?.user.role === "admin" &&
-            !data.consumable &&
-            !isLabUse &&
-            isInUse &&
+            !reactiveData.consumable &&
+            reactiveData.status === ItemStatus.ON_LOAN &&
             latestRecord?.actionByUserId && (
               <AdminRevokeCard
                 itemId={itemId}
@@ -431,6 +580,45 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
               />
             )}
         </div>
+        {isEditMode ? (
+          <div className="fixed bottom-0 right-0 p-4 flex flex-row gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setReactiveData(data);
+                setIsEditMode(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => {
+                const processedData = Object.fromEntries(
+                  Object.entries(reactiveData).filter(([_, v]) => v != null),
+                );
+                if (!processedData) return;
+                processedData;
+                updateItem.mutate({
+                  ...processedData,
+                  name: reactiveData.name,
+                  tags: reactiveData.tags,
+                  id: reactiveData.id,
+                  locationId: reactiveData.locationId,
+                  consumable: reactiveData?.consumable
+                    ? {
+                        available: reactiveData.consumable.available,
+                        total: reactiveData.consumable.total,
+                        itemId: reactiveData.consumable.itemId,
+                      }
+                    : undefined,
+                });
+              }}
+            >
+              Save
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       <AlertDialog
@@ -443,8 +631,8 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
             <AlertDialogDescription>
               There {siblingCount === 1 ? "is" : "are"}{" "}
               <strong>{siblingCount}</strong> other item
-              {siblingCount === 1 ? "" : "s"} named &ldquo;{data?.name}&rdquo;.
-              Remove the image from all of them too?
+              {siblingCount === 1 ? "" : "s"} named &ldquo;{reactiveData?.name}
+              &rdquo;. Remove the image from all of them too?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -472,8 +660,8 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
             <AlertDialogDescription>
               There {siblingCount === 1 ? "is" : "are"}{" "}
               <strong>{siblingCount}</strong> other item
-              {siblingCount === 1 ? "" : "s"} named &ldquo;{data?.name}&rdquo;.
-              Apply this image to all of them?
+              {siblingCount === 1 ? "" : "s"} named &ldquo;{reactiveData?.name}
+              &rdquo;. Apply this image to all of them?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -618,17 +806,134 @@ const Section = ({
 );
 
 // Reusable Field Row
-const InfoRow = ({
+function InfoRow({
   label,
   value,
+  type,
+  isEditMode,
+  editable,
+  onChange,
+  options,
 }: {
   label: string;
-  value: React.ReactNode;
-}) => (
-  <div>
-    <p className="text-sm text-muted-foreground">{label}</p>
-    <p>{value}</p>
-  </div>
-);
+  isEditMode?: boolean;
+  editable?: boolean;
+} & (
+  | {
+      type?: "text";
+      value: ReactNode | null;
+      onChange?: (value?: string) => void;
+      options?: undefined;
+    }
+  | {
+      type: "price";
+      value: number | null; // in cents?
+      onChange?: (value?: number) => void;
+      options?: undefined;
+    }
+  | {
+      type: "date";
+      value: Date | null;
+      onChange?: (value?: Date) => void;
+      options?: undefined;
+    }
+  | {
+      type: "option";
+      options: {
+        value: string;
+        name: string;
+        className?: string;
+        variant?: VariantProps<typeof badgeVariants>["variant"];
+        selectable?: boolean;
+      }[];
+      value: string | null;
+      onChange?: (value?: string) => void;
+    }
+  | {
+      type: "location";
+      value: Location | null;
+      onChange?: (value?: string) => void;
+      options?: undefined;
+    }
+)) {
+  let currentOption, path;
+
+  if (type === "location") {
+    // never changes mid-component render so conditional execution of hook is okay
+    const response = useLocationPath(value?.id ?? null);
+    path = response.path;
+  }
+
+  return (
+    <div>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      {isEditMode && editable !== false ? (
+        type === "text" ? (
+          <Input
+            type="text"
+            value={value as string}
+            onChange={({ target }) => onChange?.(target.value)}
+          />
+        ) : type === "date" ? (
+          <DatePicker
+            value={value ?? undefined}
+            onChange={(val) => (onChange?.(val), val)}
+          />
+        ) : type === "price" ? (
+          <MoneyInput value={value ?? undefined} onChange={onChange} />
+        ) : type === "option" ? (
+          <Select value={value ?? undefined} onValueChange={onChange}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {options
+                .filter(({ selectable }) => selectable !== false)
+                .map(({ value, name: optionName, variant, className }) => (
+                  <SelectItem value={value} key={value}>
+                    <Badge variant={variant} className={className}>
+                      {optionName}
+                    </Badge>
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        ) : type === "location" ? (
+          <NestingLocation onSelect={onChange} initialPath={path} />
+        ) : null
+      ) : type === "option" ? (
+        ((currentOption = options.filter(
+          (option) => option.value === value,
+        )?.[0]),
+        (
+          <Badge
+            variant={currentOption?.variant ?? "default"}
+            className={currentOption.className}
+          >
+            {currentOption.name}
+          </Badge>
+        ))
+      ) : (
+        <p>
+          {value == null ? (
+            " – "
+          ) : type === "text" || type == undefined ? (
+            value
+          ) : type === "price" ? (
+            `$${(value / 100).toFixed(2)}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+          ) : type === "date" ? (
+            value.toLocaleString()
+          ) : type === "location" ? (
+            path ? (
+              <StaticLocationBreadcrumb path={path} />
+            ) : (
+              " – "
+            )
+          ) : null}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export default ItemDetails;
