@@ -12,8 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-export interface NumberInputProps
-  extends Omit<NumericFormatProps, "value" | "onValueChange"> {
+export interface NumberInputProps extends Omit<
+  NumericFormatProps,
+  "value" | "onValueChange"
+> {
   stepper?: number;
   thousandSeparator?: string;
   placeholder?: string;
