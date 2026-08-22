@@ -109,7 +109,7 @@ function ExpandableRow({ row }: { row: AuditRow }) {
     hour: "2-digit",
     minute: "2-digit",
   });
-  const actionMeta = ACTION_LABELS[row.action as AuditActionType] ?? {
+  const actionMeta = ACTION_LABELS[row.action] ?? {
     label: row.action,
     className: "bg-muted text-muted-foreground",
   };
