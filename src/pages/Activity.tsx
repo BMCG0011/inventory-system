@@ -34,7 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import type { AuditActionType } from "@/server/schema/auditLog.schema";
+import { AuditActionSchema, type AuditAction } from "@/prisma-zod/schemas";
 
 type TransactionRow = inferProcedureOutput<
   AppRouter["itemRecord"]["list"]
@@ -44,34 +44,27 @@ type AuditRow = inferProcedureOutput<
   AppRouter["auditLog"]["list"]
 >["items"][number];
 
-const ACTION_LABELS: Record<
-  AuditActionType,
-  { label: string; className: string }
-> = {
-  REQUEST_CREATED: {
-    label: "Created",
-    className: "bg-blue-500/15 text-blue-700 dark:text-blue-200",
-  },
-  REQUEST_STATUS_CHANGED: {
-    label: "Status changed",
-    className: "bg-muted text-muted-foreground",
-  },
-  REQUEST_CANCELLED: {
-    label: "Cancelled",
-    className: "bg-destructive/15 text-destructive",
-  },
-  REQUEST_RECEIVED: {
-    label: "Received",
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-200",
-  },
-};
+const ACTION_LABELS: Record<AuditAction, { label: string; className: string }> =
+  {
+    REQUEST_CREATED: {
+      label: "Created",
+      className: "bg-blue-500/15 text-blue-700 dark:text-blue-200",
+    },
+    REQUEST_STATUS_CHANGED: {
+      label: "Status changed",
+      className: "bg-muted text-muted-foreground",
+    },
+    REQUEST_CANCELLED: {
+      label: "Cancelled",
+      className: "bg-destructive/15 text-destructive",
+    },
+    REQUEST_RECEIVED: {
+      label: "Received",
+      className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-200",
+    },
+  };
 
-const ALL_ACTIONS: AuditActionType[] = [
-  "REQUEST_CREATED",
-  "REQUEST_STATUS_CHANGED",
-  "REQUEST_CANCELLED",
-  "REQUEST_RECEIVED",
-];
+const ALL_ACTIONS = AuditActionSchema.options;
 
 function DiffCell({ before, after }: { before: unknown; after: unknown }) {
   if (!before && !after)
@@ -119,7 +112,7 @@ function AuditExpandableRow({ row }: { row: AuditRow }) {
     hour: "2-digit",
     minute: "2-digit",
   });
-  const actionMeta = ACTION_LABELS[row.action as AuditActionType] ?? {
+  const actionMeta = ACTION_LABELS[row.action as AuditAction] ?? {
     label: row.action,
     className: "bg-muted text-muted-foreground",
   };
@@ -402,9 +395,7 @@ function TransactionsTab() {
 }
 
 function AuditEventsTab() {
-  const [actionFilter, setActionFilter] = useState<"ALL" | AuditActionType>(
-    "ALL",
-  );
+  const [actionFilter, setActionFilter] = useState<"ALL" | AuditAction>("ALL");
   const [page, setPage] = useState(0);
   const pageSize = 50;
 
@@ -432,7 +423,7 @@ function AuditEventsTab() {
           value={actionFilter}
           onValueChange={(v) => {
             setPage(0);
-            setActionFilter(v as "ALL" | AuditActionType);
+            setActionFilter(v as "ALL" | AuditAction);
           }}
         >
           <SelectTrigger id="action-filter" className="w-52">

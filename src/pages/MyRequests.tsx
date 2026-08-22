@@ -26,25 +26,22 @@ import { ExternalLink, PackageOpen, XCircle } from "lucide-react";
 import Loading from "@/components/misc/loading";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { RequestStatusType } from "@/server/schema/consumableRequest.schema";
 import type { AppRouter } from "@/server/api/routers/_app";
 import type { inferProcedureOutput } from "@trpc/server";
+import { RequestStatusSchema, type RequestStatus } from "@/prisma-zod/schemas";
 
 type RequestRow = inferProcedureOutput<
   AppRouter["consumableRequest"]["listMine"]
 >["items"][number];
 
-const ALL_STATUSES = [
+const ALL_STATUSES: (RequestStatus | "ALL")[] = [
   "ALL",
-  "PENDING",
-  "ORDERED",
-  "RECEIVED",
-  "CANCELLED",
+  ...RequestStatusSchema.options,
 ] as const;
 type TabValue = (typeof ALL_STATUSES)[number];
 
 const statusVariant: Record<
-  RequestStatusType,
+  RequestStatus,
   { label: string; className: string }
 > = {
   PENDING: {
@@ -65,7 +62,7 @@ const statusVariant: Record<
   },
 };
 
-function StatusBadge({ status }: { status: RequestStatusType }) {
+function StatusBadge({ status }: { status: RequestStatus }) {
   const v = statusVariant[status];
   return <Badge className={v.className}>{v.label}</Badge>;
 }

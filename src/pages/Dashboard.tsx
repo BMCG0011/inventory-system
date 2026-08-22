@@ -31,11 +31,10 @@ import {
   PackageSearch,
   ShoppingBag,
 } from "lucide-react";
-
-import type { RequestStatusType } from "@/server/schema/consumableRequest.schema";
+import type { RequestStatus } from "@/prisma-zod/schemas";
 
 const statusVariant: Record<
-  RequestStatusType,
+  RequestStatus,
   { label: string; className: string }
 > = {
   PENDING: {
@@ -56,7 +55,7 @@ const statusVariant: Record<
   },
 };
 
-function StatusBadge({ status }: { status: RequestStatusType }) {
+function StatusBadge({ status }: { status: RequestStatus }) {
   const v = statusVariant[status];
   return <Badge className={v.className}>{v.label}</Badge>;
 }

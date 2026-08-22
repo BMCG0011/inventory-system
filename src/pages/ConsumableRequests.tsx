@@ -41,16 +41,16 @@ import ErrorPage from "@/pages/Error";
 import { authClient } from "@/auth/client";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
-import type { RequestStatusType } from "@/server/schema/consumableRequest.schema";
 import type { AppRouter } from "@/server/api/routers/_app";
 import type { inferProcedureOutput } from "@trpc/server";
 import { UserAvatar } from "@/components/user/UserAvatar";
+import type { RequestStatus } from "@/prisma-zod/schemas";
 
 type RequestRow = inferProcedureOutput<
   AppRouter["consumableRequest"]["list"]
 >["items"][number];
 
-const STATUSES: RequestStatusType[] = [
+const STATUSES: RequestStatus[] = [
   "PENDING",
   "ORDERED",
   "RECEIVED",
@@ -58,7 +58,7 @@ const STATUSES: RequestStatusType[] = [
 ];
 
 const statusVariant: Record<
-  RequestStatusType,
+  RequestStatus,
   { label: string; className: string }
 > = {
   PENDING: {
@@ -79,7 +79,7 @@ const statusVariant: Record<
   },
 };
 
-function StatusBadge({ status }: { status: RequestStatusType }) {
+function StatusBadge({ status }: { status: RequestStatus }) {
   const v = statusVariant[status];
   return <Badge className={v.className}>{v.label}</Badge>;
 }
@@ -88,7 +88,7 @@ export default function ConsumableRequests() {
   const { data: session, isPending } = authClient.useSession();
   const isAdmin = session?.user.role === "admin";
 
-  const [statusFilter, setStatusFilter] = useState<"ALL" | RequestStatusType>(
+  const [statusFilter, setStatusFilter] = useState<"ALL" | RequestStatus>(
     "PENDING",
   );
   const [page, setPage] = useState(0);
@@ -154,7 +154,7 @@ export default function ConsumableRequests() {
           value={statusFilter}
           onValueChange={(v) => {
             setPage(0);
-            setStatusFilter(v as "ALL" | RequestStatusType);
+            setStatusFilter(v as "ALL" | RequestStatus);
           }}
         >
           <SelectTrigger id="status" className="w-44">

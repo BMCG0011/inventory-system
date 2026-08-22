@@ -2,14 +2,7 @@ import { z } from "zod";
 import type { inferProcedureOutput } from "@trpc/server";
 import type { consumableRequestRouter } from "@/server/api/routers/consumableRequest";
 import { supplierUrlSchema } from "./consumableSupplier.schema";
-
-export const requestStatusSchema = z.enum([
-  "PENDING",
-  "ORDERED",
-  "RECEIVED",
-  "CANCELLED",
-]);
-export type RequestStatusType = z.infer<typeof requestStatusSchema>;
+import { RequestStatusSchema } from "@/prisma-zod/schemas";
 
 export const createRequestInput = z
   .object({
@@ -42,7 +35,7 @@ export const createRequestInput = z
 export const updateRequestStatusInput = z
   .object({
     id: z.uuid(),
-    status: requestStatusSchema,
+    status: RequestStatusSchema,
     fulfilledQty: z
       .number()
       .int()
@@ -64,7 +57,7 @@ export const updateRequestStatusInput = z
 
 export const listRequestsInput = z
   .object({
-    status: requestStatusSchema.optional(),
+    status: RequestStatusSchema.optional(),
     consumableId: z.uuid().optional(),
     requestedById: z.uuid().optional(),
     page: z.number().int().min(0).default(0),
