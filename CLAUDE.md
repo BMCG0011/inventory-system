@@ -79,6 +79,14 @@ Four tRPC procedure tiers in `src/server/trpc.ts`:
 - Forms use React Hook Form + Zod validation
 - UI components use Radix UI primitives with shadcn/ui (`components.json`)
 - `src/components/data-table/` contains a reusable table component used across most list views
+- Accessibility conventions: real `<a href>` for anything link-like, semantic `<nav>` for the sidebar, `cursor-pointer` on buttons, and page content rendered inside `<main id="main">` (the skip-nav link in `src/App.tsx` targets that id) — follow these for new UI
+
+### Asset (Item) data model
+
+- `Item.status` is an `ItemStatus` enum (`CHURCH_USE`, `STORED`, `IN_REPAIR`, `DISPOSED_OF`, `ON_LOAN`); display config/badge styling lives in `src/lib/item-status.tsx`. `Item.stored` and `Item.cost` are deprecated in favor of `status` and `costCents` — avoid using them in new code
+- Monetary fields (`costCents`, `depreciatedValueCents`) are stored as integer cents; use `MoneyInput` (`src/components/inputs/money-input.tsx`) for currency entry, which converts to/from dollars for display
+- Date fields (e.g. `purchasedAt`) use the `DatePicker`/`Calendar` components (`src/components/ui/`), backed by `date-fns` + `react-day-picker`
+- `Location` is self-referential (`parentId`/`children`) for nested storage locations. `location.getPath` (tRPC) walks a location up to its root; the `useLocationPath` hook (`src/hooks/use-location.ts`) wraps it. Drill-down location pickers live in `src/components/item-crud/` (`LocationSelector`, `NestingLocation`, `CascadingLocation`)
 
 ### Infrastructure
 
