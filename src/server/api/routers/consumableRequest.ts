@@ -11,6 +11,9 @@ import { resolvePrimarySupplierId } from "../utils/consumableRequest/primarySupp
 import { emitRequestStatusNotification } from "../utils/notification/emit";
 import { writeAuditLog } from "../utils/audit/log";
 import { resolveAvatarUrl } from "@/server/lib/avatar";
+import {
+  RequestStatusSchema,
+} from "@/prisma-zod/schemas";
 
 const requestInclude = {
   consumable: {
@@ -150,9 +153,7 @@ export const consumableRequestRouter = router({
     .input(
       z
         .object({
-          status: z
-            .enum(["PENDING", "ORDERED", "RECEIVED", "CANCELLED"])
-            .optional(),
+          status: RequestStatusSchema.optional(),
           page: z.number().int().min(0).default(0),
           pageSize: z.number().int().min(1).max(100).default(25),
         })

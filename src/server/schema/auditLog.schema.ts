@@ -1,21 +1,14 @@
 import { z } from "zod";
 import type { inferProcedureOutput } from "@trpc/server";
 import type { auditLogRouter } from "@/server/api/routers/auditLog";
-
-export const auditActionSchema = z.enum([
-  "REQUEST_CREATED",
-  "REQUEST_STATUS_CHANGED",
-  "REQUEST_CANCELLED",
-  "REQUEST_RECEIVED",
-]);
-export type AuditActionType = z.infer<typeof auditActionSchema>;
+import { AuditActionSchema } from "@/prisma-zod/schemas";
 
 export const listAuditLogsInput = z
   .object({
     entityType: z.string().optional(),
     entityId: z.string().optional(),
     actorId: z.uuid().optional(),
-    action: auditActionSchema.optional(),
+    action: AuditActionSchema.optional(),
     page: z.number().int().min(0).default(0),
     pageSize: z.number().int().min(1).max(200).default(50),
   })
