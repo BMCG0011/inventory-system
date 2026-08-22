@@ -24,8 +24,8 @@ import type { AppRouter } from "@/server/api/routers/_app";
 import type React from "react";
 import { Route, Routes } from "react-router-dom";
 import ItemDetails from "@/pages/ItemDetails";
-import { ItemStatus } from "@prisma/client";
 import {
+  ItemStatus,
   getItemStatusBadge,
   getItemStatusBadgeConfig,
 } from "@/lib/item-status";

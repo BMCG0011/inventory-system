@@ -30,7 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { MapPin } from "lucide-react";
-import { ItemStatus } from "@prisma/client";
+import { ItemStatus } from "@/lib/item-status";
 
 type GetItemsOutput = inferProcedureOutput<
   AppRouter["item"]["list"]

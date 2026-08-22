@@ -1,6 +1,20 @@
 import { Badge, badgeVariants } from "@/components/ui/badge";
-import type { ItemStatus } from "@prisma/client";
+import type { ItemStatus as PrismaItemStatus } from "@prisma/client";
 import type { VariantProps } from "class-variance-authority";
+
+// Re-exported as a plain runtime object (not imported from @prisma/client) so
+// frontend code can reference status values without pulling the generated
+// Prisma client into the browser bundle, which breaks at runtime (bare
+// specifier ".prisma/client/index-browser" cannot be resolved outside Node).
+export type ItemStatus = PrismaItemStatus;
+
+export const ItemStatus = {
+  CHURCH_USE: "CHURCH_USE",
+  STORED: "STORED",
+  IN_REPAIR: "IN_REPAIR",
+  DISPOSED_OF: "DISPOSED_OF",
+  ON_LOAN: "ON_LOAN",
+} as const satisfies Record<ItemStatus, ItemStatus>;
 
 export const itemStatusBadgeConfig: {
   value: ItemStatus;

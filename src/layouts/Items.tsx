@@ -22,8 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import type React from "react";
 import { Route, Routes } from "react-router-dom";
 import ItemDetails from "@/pages/ItemDetails";
-import { ItemStatus } from "@prisma/client";
 import {
+  ItemStatus,
   getItemStatusBadge,
   getItemStatusBadgeConfig,
 } from "@/lib/item-status";

@@ -17,7 +17,7 @@ import { useForm } from "react-hook-form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
-import { ItemStatus } from "@prisma/client";
+import { ItemStatus } from "@/lib/item-status";
 
 export const cartItemSchema = z.object({
   id: z.uuid(),

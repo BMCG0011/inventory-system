@@ -38,8 +38,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ItemStatus, type Location } from "@prisma/client";
-import { itemStatusBadgeConfig } from "@/lib/item-status";
+import type { Location } from "@prisma/client";
+import { ItemStatus, itemStatusBadgeConfig } from "@/lib/item-status";
 import NestingLocation from "@/components/item-crud/NestingLocation";
 import { useLocationPath } from "@/hooks/use-location";
 import { StaticLocationBreadcrumb } from "@/components/Location";

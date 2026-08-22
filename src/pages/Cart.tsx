@@ -22,7 +22,7 @@ import { Form } from "@/components/ui/form";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/client/trpc";
-import { ItemStatus } from "@prisma/client";
+import { ItemStatus } from "@/lib/item-status";
 
 function getItemInvalidReason(
   item: ReturnType<typeof useCart>["items"][number],

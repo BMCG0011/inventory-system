@@ -1,6 +1,6 @@
 import { trpc } from "@/client/trpc";
 import type { AppRouter } from "@/server/api/routers/_app";
-import { ItemStatus } from "@prisma/client";
+import { ItemStatus } from "@/lib/item-status";
 import type { inferProcedureOutput } from "@trpc/server";
 import {
   createContext,
