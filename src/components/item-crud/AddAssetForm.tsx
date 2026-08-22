@@ -16,6 +16,7 @@ import { useCallback, useState } from "react";
 import { CascadingLocation } from "./CascadingLocation";
 import { createItemInput } from "@/server/schema";
 import { MoneyInput } from "../inputs/money-input";
+import { toast } from "sonner";
 
 interface AddAssetFormProps {
   createItem: (
@@ -60,7 +61,11 @@ export function AddAssetForm({
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onAssetSumbit)}
+        onSubmit={() => {
+          form
+            .handleSubmit(onAssetSumbit)()
+            .catch(() => toast.error("Failed to submit the form"));
+        }}
         className="flex flex-col gap-5"
       >
         <FormField

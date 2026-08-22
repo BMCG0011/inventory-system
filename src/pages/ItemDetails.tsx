@@ -1,7 +1,8 @@
 import { validate as isValidUUID } from "uuid";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge, badgeVariants } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
+import { badgeVariants } from "@/components/ui/variants";
 import { QRCodeCanvas } from "qrcode.react";
 import { trpc } from "@/client/trpc";
 import ErrorPage from "./Error";
@@ -43,6 +44,7 @@ import { ItemStatus, itemStatusBadgeConfig } from "@/lib/item-status";
 import NestingLocation from "@/components/item-crud/NestingLocation";
 import { useLocationPath } from "@/hooks/use-location";
 import { StaticLocationBreadcrumb } from "@/components/Location";
+import { formatCurrency } from "@/lib/utils";
 
 interface ItemDetailsProps {
   passedId?: string;
@@ -280,7 +282,9 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                     type="file"
                     accept="image/jpeg,image/png,image/webp,image/gif"
                     className="hidden"
-                    onChange={handleImageUpload}
+                    onChange={(e) => {
+                      void handleImageUpload(e);
+                    }}
                   />
                   <Button
                     size="sm"
@@ -296,7 +300,9 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                       size="sm"
                       variant="ghost"
                       disabled={isUploading}
-                      onClick={handleImageDelete}
+                      onClick={() => {
+                        void handleImageDelete();
+                      }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -330,7 +336,7 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                   type="option"
                   options={itemStatusBadgeConfig}
                   isEditMode={isEditMode}
-                  editable={reactiveData?.status !== "ON_LOAN"}
+                  editable={reactiveData?.status !== ItemStatus.ON_LOAN}
                   onChange={(value) => {
                     setReactiveData({
                       ...reactiveData,
@@ -496,7 +502,13 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                             </Section>*/}
             </div>
             {/* Notes */}
-            <ItemNotes itemId={itemId} data={reactiveData} onSaved={refetch} />
+            <ItemNotes
+              itemId={itemId}
+              data={reactiveData}
+              onSaved={() => {
+                refetch().catch(() => toast.error("Failed to refetch."));
+              }}
+            />
 
             {/* Timestamps */}
             <Section title="Timestamps">
@@ -549,7 +561,12 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
                 <CardTitle>Restock</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center">
-                <RestockForm item={reactiveData} callback={onRestock} />
+                <RestockForm
+                  item={reactiveData}
+                  callback={() => {
+                    onRestock().catch(() => toast.error("Failed to refetch."));
+                  }}
+                />
               </CardContent>
             </Card>
           )}
@@ -559,9 +576,10 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
             reactiveData.status === ItemStatus.STORED && (
               <AdminAssignCard
                 itemId={itemId}
-                onSuccess={async () => {
-                  await refetch();
-                  callback?.();
+                onSuccess={() => {
+                  refetch()
+                    .then(() => callback?.())
+                    .catch(() => toast.error("Failed to refetch."));
                 }}
               />
             )}
@@ -573,9 +591,12 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
               <AdminRevokeCard
                 itemId={itemId}
                 targetUserId={latestRecord.actionByUserId}
-                onSuccess={async () => {
-                  await refetch();
-                  callback?.();
+                onSuccess={() => {
+                  refetch()
+                    .then(() => {
+                      callback?.();
+                    })
+                    .catch(() => toast.error("Failed to refetch."));
                 }}
               />
             )}
@@ -595,7 +616,9 @@ const ItemDetails = ({ passedId, callback }: ItemDetailsProps) => {
               variant="default"
               onClick={() => {
                 const processedData = Object.fromEntries(
-                  Object.entries(reactiveData).filter(([_, v]) => v != null),
+                  Object.entries(reactiveData).filter(
+                    (entry) => entry[1] != null,
+                  ),
                 );
                 if (!processedData) return;
                 updateItem.mutate({
@@ -804,6 +827,14 @@ const Section = ({
   </section>
 );
 
+interface InfoRowOptionConfig {
+  value: string;
+  name: string;
+  className?: string;
+  variant?: VariantProps<typeof badgeVariants>["variant"];
+  selectable?: boolean;
+}
+
 // Reusable Field Row
 function InfoRow({
   label,
@@ -838,13 +869,7 @@ function InfoRow({
     }
   | {
       type: "option";
-      options: {
-        value: string;
-        name: string;
-        className?: string;
-        variant?: VariantProps<typeof badgeVariants>["variant"];
-        selectable?: boolean;
-      }[];
+      options: InfoRowOptionConfig[];
       value: string | null;
       onChange?: (value?: string) => void;
     }
@@ -855,12 +880,12 @@ function InfoRow({
       options?: undefined;
     }
 )) {
-  let currentOption, path;
+  let currentOption: undefined | InfoRowOptionConfig = undefined;
 
   const response = useLocationPath(
     type === "location" ? (value?.id ?? null) : null,
   );
-  path = response.path;
+  const path = response.path;
 
   return (
     <div>
@@ -918,7 +943,7 @@ function InfoRow({
           ) : type === "text" || type == undefined ? (
             value
           ) : type === "price" ? (
-            `$${(value / 100).toFixed(2)}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+            formatCurrency(value / 100)
           ) : type === "date" ? (
             value.toLocaleString()
           ) : type === "location" ? (

@@ -59,7 +59,11 @@ export default function RestockForm({ item, callback }: RestockFormProps) {
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={() => {
+          form
+            .handleSubmit(onSubmit)()
+            .catch(() => toast.error("Failed to submit form."));
+        }}
         className="flex flex-col gap-3"
       >
         <FormField

@@ -410,9 +410,6 @@ function AuditLogCard() {
   );
 }
 
-export const formatConsumableTotalCost = (totalCost: number): string =>
-  `$${totalCost.toFixed(2)}`;
-
 export default function Dashboard() {
   const { data: session } = authClient.useSession();
   const isAdmin = session?.user.role === "admin";

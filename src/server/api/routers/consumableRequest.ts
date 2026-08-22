@@ -83,7 +83,7 @@ export const consumableRequestRouter = router({
             where: { id: supplierId },
             select: { id: true, consumableId: true },
           });
-          if (!supplier || supplier.consumableId !== input.consumableId) {
+          if (supplier?.consumableId !== input.consumableId) {
             throw new TRPCError({
               code: "BAD_REQUEST",
               message: "Selected supplier does not belong to this consumable",

@@ -1,15 +1,4 @@
-import { cn } from "@/lib/utils";
-
-export function getInitials(name: string | null | undefined): string {
-  if (!name) return "?";
-  const words = name.trim().split(/\s+/);
-  return words
-    .map((w) => w[0])
-    .filter(Boolean)
-    .slice(0, 3)
-    .join("")
-    .toUpperCase();
-}
+import { cn, getInitials } from "@/lib/utils";
 
 interface UserAvatarProps {
   name: string | null | undefined;

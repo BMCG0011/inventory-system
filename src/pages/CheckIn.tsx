@@ -124,7 +124,14 @@ export default function CheckIn() {
       {/* Content Section */}
       <div className="container mx-auto px-4 py-6 md:px-6 lg:px-8">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={() => {
+              form
+                .handleSubmit(onSubmit)()
+                .catch(() => toast.error("Failed to submit form."));
+            }}
+            className="space-y-6"
+          >
             {/* Items List */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">

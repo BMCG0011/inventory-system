@@ -138,7 +138,9 @@ const Consumables = () => {
         itemInCart,
         getCartQuantity,
         isDeleting: deleteMut.isPending,
-        callback: onRestock,
+        callback: () => {
+          void onRestock();
+        },
         isAdmin,
       }),
     [
@@ -200,7 +202,9 @@ const Consumables = () => {
         BarComponents={(table) => (
           <TableActions
             table={table}
-            onRefetch={refetch}
+            onRefetch={() => {
+              refetch().catch(() => toast.error("Failed to refetch."));
+            }}
             defaultConsumable
             isAdmin={isAdmin}
           />
@@ -227,7 +231,9 @@ const Consumables = () => {
           item={selectedItem}
           open={isSheetOpen}
           onOpenChange={setIsSheetOpen}
-          onSuccess={refetch}
+          onSuccess={() => {
+            refetch().catch(() => toast.error("Failed to refetch."));
+          }}
         />
       )}
 

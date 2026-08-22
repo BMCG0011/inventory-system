@@ -106,7 +106,7 @@ export default function SupplierManager({
       <Label className="text-base">Suppliers</Label>
       {isLoading && <p className="text-xs text-muted-foreground">Loading…</p>}
 
-      {suppliers && suppliers.length === 0 && (
+      {suppliers?.length === 0 && (
         <p className="text-xs text-muted-foreground">
           No suppliers yet. Add one below.
         </p>

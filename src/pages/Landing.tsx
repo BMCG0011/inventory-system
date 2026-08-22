@@ -10,6 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -32,7 +33,14 @@ export default function Landing() {
               real-time analytics.
             </p>
             <div className="flex gap-4">
-              <Button size="lg" onClick={() => navigate("/dashboard")}>
+              <Button
+                size="lg"
+                onClick={() => {
+                  navigate("/dashboard")?.catch(() =>
+                    toast.error("Failed to navigate"),
+                  );
+                }}
+              >
                 Get Started
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -169,7 +177,11 @@ export default function Landing() {
                 <Button
                   size="lg"
                   className="w-full"
-                  onClick={() => navigate("/app/dashboard")}
+                  onClick={() => {
+                    navigate("/app/dashboard")?.catch(() =>
+                      toast.error("Failed to navigate."),
+                    );
+                  }}
                 >
                   Start Managing Inventory
                   <ArrowRight className="ml-2 h-4 w-4" />

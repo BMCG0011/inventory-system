@@ -10,6 +10,7 @@ import {
 import { AlertCircle, Camera, CheckCircle2, Info, X } from "lucide-react";
 import { Alert, AlertDescription } from "./alert";
 import { BrowserMultiFormatReader } from "@zxing/library";
+import { toast } from "sonner";
 
 export type ScanFeedback = {
   type: "success" | "error" | "info";
@@ -257,7 +258,14 @@ export function QRScanner({
 
           <div className="flex gap-2">
             {!isScanning ? (
-              <Button onClick={startCamera} className="flex-1">
+              <Button
+                onClick={() => {
+                  startCamera().catch(() =>
+                    toast.error("Failed to start camera."),
+                  );
+                }}
+                className="flex-1"
+              >
                 <Camera className="w-4 h-4 mr-2" />
                 Start Camera
               </Button>

@@ -18,9 +18,7 @@ describe("resolvePrimarySupplierId", () => {
   });
 
   it("falls back to the most recent request supplier when no primary is flagged", async () => {
-    prismaMock.consumableSupplier.findFirst.mockResolvedValueOnce(
-      null,
-    );
+    prismaMock.consumableSupplier.findFirst.mockResolvedValueOnce(null);
     prismaMock.consumableRequest.findFirst.mockResolvedValueOnce({
       supplierId: "recent-supplier",
     } as never);
@@ -31,9 +29,7 @@ describe("resolvePrimarySupplierId", () => {
   });
 
   it("returns null when neither a primary nor a prior request supplier exists", async () => {
-    prismaMock.consumableSupplier.findFirst.mockResolvedValueOnce(
-      null,
-    );
+    prismaMock.consumableSupplier.findFirst.mockResolvedValueOnce(null);
     prismaMock.consumableRequest.findFirst.mockResolvedValueOnce(null);
 
     const result = await resolvePrimarySupplierId(txMock, "consumable-1");

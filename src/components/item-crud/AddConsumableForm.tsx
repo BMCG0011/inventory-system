@@ -15,6 +15,7 @@ import { NumberInput } from "../inputs/numeric-input";
 import { useCallback } from "react";
 import { CascadingLocation } from "./CascadingLocation";
 import { createItemInput } from "@/server/schema";
+import { toast } from "sonner";
 
 interface AddConsumableFormProps {
   createItem: (data: z.infer<typeof createItemInput>) => void;
@@ -54,7 +55,11 @@ export function AddConsumableForm({ createItem }: AddConsumableFormProps) {
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onConsumableSubmit)}
+        onSubmit={() => {
+          form
+            .handleSubmit(onConsumableSubmit)()
+            .catch(() => toast.error("Failed to submit form"));
+        }}
         className="flex flex-col gap-5"
       >
         <FormField

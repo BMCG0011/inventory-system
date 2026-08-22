@@ -65,7 +65,7 @@ export const consumableSupplierRouter = router({
           const supplier = await tx.consumableSupplier.findUnique({
             where: { id: input.supplierId },
           });
-          if (!supplier || supplier.consumableId !== input.consumableId) {
+          if (supplier?.consumableId !== input.consumableId) {
             throw new TRPCError({
               code: "BAD_REQUEST",
               message: "Supplier does not belong to this consumable",

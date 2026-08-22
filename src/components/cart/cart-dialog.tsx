@@ -18,6 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { ItemStatus } from "@/lib/item-status";
 import { cartFormSchema, type CartForm } from "@/server/schema/cart.schema";
+import { toast } from "sonner";
 
 function getItemInvalidReason(
   item: ReturnType<typeof useCart>["items"][number],
@@ -90,7 +91,14 @@ export default function CartDialog() {
           </div>
         </DialogTrigger>
         <Form {...form}>
-          <form id="checkout-form" onSubmit={form.handleSubmit(onSubmit)}>
+          <form
+            id="checkout-form"
+            onSubmit={() => {
+              form
+                .handleSubmit(onSubmit)()
+                .catch(() => toast.error("Failed to checkout"));
+            }}
+          >
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>My Cart</DialogTitle>

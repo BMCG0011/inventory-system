@@ -29,3 +29,26 @@ export const getBaseUrl = () => {
   if (process.env.FRONTEND_URL) return `${process.env.FRONTEND_URL}`;
   return `http://localhost:${process.env.PORT ?? 3000}`;
 };
+export function getInitials(name: string | null | undefined): string {
+  if (!name) return "?";
+  const words = name.trim().split(/\s+/);
+  return words
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 3)
+    .join("")
+    .toUpperCase();
+}
+export const formatCurrency = (
+  value?: number | null,
+  quantity?: number | null,
+) => {
+  if (value == undefined || value == null) {
+    return " – ";
+  }
+
+  return `$${(value * (quantity ?? 1)).toFixed(2)}`.replace(
+    /\B(?=(\d{3})+(?!\d))/g,
+    ",",
+  );
+};

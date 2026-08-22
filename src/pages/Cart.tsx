@@ -216,7 +216,13 @@ export default function Cart() {
         ) : (
           /* Items List */
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
+            <form
+              onSubmit={() => {
+                form
+                  .handleSubmit(onSubmit)()
+                  .catch(() => toast.error("Failed to submit form."));
+              }}
+            >
               <div className="py-6 space-y-6">
                 <div className="rounded-lg border bg-card p-4 md:p-6 shadow-sm">
                   <div className="space-y-5">

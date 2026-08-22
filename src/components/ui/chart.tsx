@@ -2,6 +2,7 @@ import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 
 import { cn } from "@/lib/utils";
+import type { Payload } from "recharts/types/component/DefaultTooltipContent";
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const;
@@ -125,7 +126,7 @@ function ChartTooltipContent({
     nameKey?: string;
     labelKey?: string;
     label?: string;
-    payload?: any[];
+    payload?: RechartsPrimitive.TooltipPayload;
   }) {
   const { config } = useChart();
 
@@ -134,8 +135,8 @@ function ChartTooltipContent({
       return null;
     }
 
-    const [item] = payload;
-    const key = `${labelKey ?? item?.dataKey ?? item?.name ?? "value"}`;
+    const item = payload?.[0];
+    const key = `${labelKey ?? (typeof item?.dataKey === "function" ? undefined : item?.dataKey) ?? item?.name ?? "value"}`;
     const itemConfig = getPayloadConfigFromPayload(config, item, key);
     const value =
       !labelKey && typeof label === "string"
@@ -181,13 +182,14 @@ function ChartTooltipContent({
       {!nestLabel ? tooltipLabel : null}
       <div className="grid gap-1.5">
         {payload.map((item, index) => {
-          const key = `${nameKey ?? item.name ?? item.dataKey ?? "value"}`;
+          const key = `${nameKey ?? item.name ?? (typeof item?.dataKey === "function" ? undefined : item?.dataKey) ?? "value"}`;
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
-          const indicatorColor = color ?? item.payload.fill ?? item.color;
+          const indicatorColor =
+            color ?? (item.payload as Payload)?.fill ?? item.color;
 
           return (
             <div
-              key={item.dataKey}
+              key={typeof item.dataKey === "function" ? null : item.dataKey}
               className={cn(
                 "[&>svg]:text-muted-foreground flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5",
                 indicator === "dot" && "items-center",
@@ -340,9 +342,7 @@ function getPayloadConfigFromPayload(
     key in payloadPayload &&
     typeof payloadPayload[key as keyof typeof payloadPayload] === "string"
   ) {
-    configLabelKey = payloadPayload[
-      key as keyof typeof payloadPayload
-    ];
+    configLabelKey = payloadPayload[key as keyof typeof payloadPayload];
   }
 
   return configLabelKey in config ? config[configLabelKey] : config[key];

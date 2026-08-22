@@ -34,7 +34,7 @@ interface DataTableProps<TData extends HasId, TValue> {
   pageIndex?: number;
   filterKey: string;
   filterValue?: string;
-  BarComponents: (table: any) => React.JSX.Element;
+  BarComponents: (table: Table<TData>) => React.JSX.Element;
   onPageChange?: (pageIndex: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
   onFilterChange?: (filter: string) => void;

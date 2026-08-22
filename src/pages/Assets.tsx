@@ -233,7 +233,13 @@ const Assets = () => {
         onFilterChange={handleFilterChange}
         onSortingChange={handleSortingChange}
         BarComponents={(table) => (
-          <TableActions table={table} onRefetch={refetch} isAdmin={isAdmin} />
+          <TableActions
+            table={table}
+            onRefetch={() => {
+              refetch().catch(() => toast.error("Failed to refetch."));
+            }}
+            isAdmin={isAdmin}
+          />
         )}
         pageIndex={pageIndex}
         pageSize={pageSize}
@@ -259,7 +265,9 @@ const Assets = () => {
           item={selectedItem}
           open={isSheetOpen}
           onOpenChange={setIsSheetOpen}
-          onSuccess={refetch}
+          onSuccess={() => {
+            refetch().catch(() => toast.error("Failed to refetch."));
+          }}
         />
       )}
 

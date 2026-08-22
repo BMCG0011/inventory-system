@@ -113,7 +113,13 @@ export function AddDialog({ defaultConsumable = false }: AddDialogProps) {
         </DialogHeader>
 
         {isConsumable ? (
-          <AddConsumableForm createItem={createItem} />
+          <AddConsumableForm
+            createItem={(data) => {
+              createItem(data).catch(() =>
+                toast.error("Failed to create item."),
+              );
+            }}
+          />
         ) : (
           <AddAssetForm
             createItem={createItem}
@@ -168,7 +174,11 @@ export function AddDialog({ defaultConsumable = false }: AddDialogProps) {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={applySerial}
+                      onClick={() => {
+                        applySerial().catch(() =>
+                          toast.error("Failed to apply serial."),
+                        );
+                      }}
                       disabled={!serialInput.trim() || isCheckingSerial}
                     >
                       {isCheckingSerial ? (

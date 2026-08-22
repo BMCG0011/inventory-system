@@ -1,4 +1,4 @@
-import { badgeVariants } from "@/components/ui/badge";
+import { badgeVariants } from "@/components/ui/variants";
 import type { ItemStatus as PrismaItemStatus } from "@prisma/client";
 import type { VariantProps } from "class-variance-authority";
 

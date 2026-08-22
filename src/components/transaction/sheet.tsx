@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { MoveUpLeft, MoveUpRight, Flame } from "lucide-react";
 import type { AppRouter } from "@/server/api/routers/_app";
 import type { inferProcedureOutput } from "@trpc/server";
+import { formatCurrency } from "@/lib/utils";
 
 type GetItemRecordsOutput = inferProcedureOutput<
   AppRouter["itemRecord"]["get"]
@@ -36,14 +37,6 @@ const formatDate = (dateString?: Date | string | null) => {
     second: "numeric",
     hour12: true,
   });
-};
-
-const formatCurrency = (
-  cost: number | null | undefined,
-  quantity: number | null | undefined,
-) => {
-  const value = (cost ?? 0) * (quantity ?? 1);
-  return `$${value.toFixed(2)}`;
 };
 
 export default function TransactionDetailsSheet({

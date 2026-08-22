@@ -172,7 +172,11 @@ export default function ModifyItemForm({
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onUpdateItemSubmit)}
+        onSubmit={() => {
+          form
+            .handleSubmit(onUpdateItemSubmit)()
+            .catch(() => toast.error("Failed to submit form"));
+        }}
         className="h-full flex flex-col justify-between overflow-y-auto"
       >
         <div className="flex flex-col gap-6 px-6 flex-1 overflow-y-auto">

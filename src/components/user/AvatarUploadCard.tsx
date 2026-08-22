@@ -2,7 +2,8 @@ import { useCallback, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
 import { authClient } from "@/auth/client";
-import { UserAvatar, getInitials } from "@/components/user/UserAvatar";
+import { UserAvatar } from "@/components/user/UserAvatar";
+import { getInitials } from "@/lib/utils";
 import { getCroppedImg } from "@/utils/cropImage";
 import { Button } from "@/components/ui/button";
 import {
@@ -83,7 +84,7 @@ export function AvatarUploadCard() {
       }
 
       await authClient.updateUser({ image: avatarProxyUrl(user.id) });
-      refetch();
+      await refetch();
       setCropSrc(null);
       toast.success("Avatar updated");
     } catch (err) {
@@ -104,7 +105,7 @@ export function AvatarUploadCard() {
       if (!res.ok) throw new Error("Remove failed");
 
       await authClient.updateUser({ image: null });
-      refetch();
+      await refetch();
       toast.success("Avatar removed");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Remove failed");

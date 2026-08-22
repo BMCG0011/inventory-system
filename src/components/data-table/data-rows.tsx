@@ -1,12 +1,14 @@
-import { type Table, flexRender } from "@tanstack/react-table";
+import { type ColumnDef, type Table, flexRender } from "@tanstack/react-table";
 import { TableCell, TableRow } from "@/components/ui/table";
 
-interface DataRowsProps<TData> {
+interface DataRowsProps<TData, TValue> {
   table: Table<TData>;
-  columns: any[];
+  columns: ColumnDef<TData, TValue>[];
 }
 
-export function DataRows<TData>({ table }: DataRowsProps<TData>) {
+export function DataRows<TData, TValue>({
+  table,
+}: DataRowsProps<TData, TValue>) {
   const rows = table.getRowModel().rows;
 
   return (
