@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 import { Hono } from "hono";
-import { serveStatic } from "hono/bun";
+import { join } from "node:path";
 import { cors } from "hono/cors";
 import { trpcServer } from "@hono/trpc-server";
 import { appRouter } from "@/server/api/routers/_app";
@@ -86,9 +86,23 @@ app.use(
 
 // Serve the built frontend directly (replaces the old vite-preview process,
 // which isn't meant for production use and was hanging under concurrent
-// asset requests, causing 504s / blank pages). Falls through via next() for
-// any path that isn't a real file in dist/, so API routes below still work.
-app.use("/*", serveStatic({ root: "./dist" }));
+// asset requests, causing 504s / blank pages). Uses Bun's own file APIs
+// rather than hono/bun's serveStatic, which was silently failing to match
+// nested /assets/* paths and falling through to the SPA index.html fallback
+// below for every asset request.
+const distDir = join(import.meta.dir, "..", "dist");
+
+async function serveFromDist(relativePath: string): Promise<Response> {
+    const file = Bun.file(join(distDir, relativePath));
+    if (!(await file.exists())) {
+        return new Response("Not Found", { status: 404 });
+    }
+    return new Response(file);
+}
+
+app.get("/assets/*", (c) => serveFromDist(c.req.path));
+app.get("/favicon-light.svg", () => serveFromDist("favicon-light.svg"));
+app.get("/favicon-dark.svg", () => serveFromDist("favicon-dark.svg"));
 
 // Handle authentication routes
 app.on(["POST", "GET"], "/api/auth/*", async (c) => {
@@ -540,7 +554,7 @@ if (metricsEnabled) {
 // Must be the last route registered: it's a terminal wildcard handler, so
 // anything registered after it would never be reached. Serves index.html for
 // client-side routes (e.g. /items/123) that don't correspond to a real file.
-app.get("*", serveStatic({ path: "./dist/index.html" }));
+app.get("*", () => serveFromDist("index.html"));
 
 export default {
     port: process.env.PORT ?? 3000,
