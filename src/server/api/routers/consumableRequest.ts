@@ -11,9 +11,7 @@ import { resolvePrimarySupplierId } from "../utils/consumableRequest/primarySupp
 import { emitRequestStatusNotification } from "../utils/notification/emit";
 import { writeAuditLog } from "../utils/audit/log";
 import { resolveAvatarUrl } from "@/server/lib/avatar";
-import {
-  RequestStatusSchema,
-} from "@/prisma-zod/schemas";
+import { RequestStatusSchema } from "@/prisma-zod/schemas";
 
 const requestInclude = {
   consumable: {

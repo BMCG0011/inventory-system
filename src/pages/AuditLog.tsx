@@ -34,27 +34,25 @@ type AuditRow = inferProcedureOutput<
   AppRouter["auditLog"]["list"]
 >["items"][number];
 
-const ACTION_LABELS: Record<
-  AuditAction,
-  { label: string; className: string }
-> = {
-  REQUEST_CREATED: {
-    label: "Created",
-    className: "bg-blue-500/15 text-blue-700 dark:text-blue-200",
-  },
-  REQUEST_STATUS_CHANGED: {
-    label: "Status changed",
-    className: "bg-muted text-muted-foreground",
-  },
-  REQUEST_CANCELLED: {
-    label: "Cancelled",
-    className: "bg-destructive/15 text-destructive",
-  },
-  REQUEST_RECEIVED: {
-    label: "Received",
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-200",
-  },
-};
+const ACTION_LABELS: Record<AuditAction, { label: string; className: string }> =
+  {
+    REQUEST_CREATED: {
+      label: "Created",
+      className: "bg-blue-500/15 text-blue-700 dark:text-blue-200",
+    },
+    REQUEST_STATUS_CHANGED: {
+      label: "Status changed",
+      className: "bg-muted text-muted-foreground",
+    },
+    REQUEST_CANCELLED: {
+      label: "Cancelled",
+      className: "bg-destructive/15 text-destructive",
+    },
+    REQUEST_RECEIVED: {
+      label: "Received",
+      className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-200",
+    },
+  };
 
 const ALL_ACTIONS = AuditActionSchema.options;
 
@@ -173,9 +171,7 @@ export default function AuditLog() {
   const { data: session, isPending } = authClient.useSession();
   const isAdmin = session?.user.role === "admin";
 
-  const [actionFilter, setActionFilter] = useState<"ALL" | AuditAction>(
-    "ALL",
-  );
+  const [actionFilter, setActionFilter] = useState<"ALL" | AuditAction>("ALL");
   const [page, setPage] = useState(0);
   const pageSize = 50;
 
