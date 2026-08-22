@@ -1,0 +1,124 @@
+# Dokploy production deployment
+#
+# In Dokploy: create a "Compose" application, point it at this repo, and set
+# this file as the compose path. Then configure all required environment
+# variables listed below in the Dokploy project settings.
+#
+# REQUIRED variables — must be set before first deploy:
+#   DOMAIN                 e.g. inventory.example.com
+#   POSTGRES_PASSWORD      strong random password
+#   BETTER_AUTH_SECRET     strong random secret (openssl rand -hex 32)
+#   MINIO_ROOT_USER        MinIO admin username
+#   MINIO_ROOT_PASSWORD    MinIO admin password (min 8 chars)
+#   MCP_PASSWORD           password for the /mcp endpoint
+#   KIOSK_SECRET           shared passphrase for kiosk mode
+#   GITHUB_CLIENT_ID       from https://github.com/settings/developers
+#   GITHUB_CLIENT_SECRET   from the same GitHub OAuth App
+#
+# OPTIONAL variables:
+#   POSTGRES_USER          (default: postgres)
+#   POSTGRES_DB            (default: inventory)
+#   S3_BUCKET              (default: gcode-vault)
+#   OLLAMA_URL / OLLAMA_MODEL / OLLAMA_AUTH_TOKEN
+#   METRICS_ENABLED / METRICS_USERNAME / METRICS_PASSWORD
+
+
+services:
+  app:
+    # Image is built in GitHub Actions and pushed to Docker Hub on every push
+    # to main. Dokploy pulls it here — the server never runs the build.
+    # VITE_KIOSK_SECRET and VITE_PRINTING_ENABLED are baked in at CI build time
+    # via the VITE_KIOSK_SECRET Actions secret and VITE_PRINTING_ENABLED Actions var.
+    image: bmcg0011/inventory-system:testing
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-inventory}?schema=public
+      BETTER_AUTH_URL: https://${DOMAIN}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      FRONTEND_URL: https://${DOMAIN}
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: ${S3_BUCKET:-gcode-vault}
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      MCP_PASSWORD: ${MCP_PASSWORD}
+      KIOSK_SECRET: ${KIOSK_SECRET}
+      VITE_KIOSK_SECRET: ${KIOSK_SECRET}
+      PRINTING_ENABLED: ${PRINTING_ENABLED:-true}
+      # GitHub OAuth App
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      # AI chat (optional)
+      OLLAMA_URL: ${OLLAMA_URL:-}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-}
+      OLLAMA_AUTH_TOKEN: ${OLLAMA_AUTH_TOKEN:-}
+    healthcheck:
+      # Check the Hono backend directly — vite preview does not expose /health
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.inventory.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.inventory.entrypoints=websecure"
+      - "traefik.http.routers.inventory.tls.certresolver=letsencrypt"
+      # Port 4173 is vite preview; it proxies /api, /mcp, /metrics to :3000
+      - "traefik.http.services.inventory.loadbalancer.server.port=4173"
+
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-inventory}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  minio:
+    image: quay.io/minio/minio:latest
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  createbuckets:
+    image: quay.io/minio/mc:latest
+    restart: on-failure
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set s3 http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
+      /usr/bin/mc mb --ignore-existing s3/${S3_BUCKET:-gcode-vault} &&
+      /usr/bin/mc anonymous set none s3/${S3_BUCKET:-gcode-vault}
+      "
+
+volumes:
+  postgres_data:
+  minio_data:
