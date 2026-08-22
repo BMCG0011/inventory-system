@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { QRScanner } from "@/components/ui/qr-scanner";
 import { ShoppingCart, Trash2, PackageOpen } from "lucide-react";
-import { formSchema, type CartForm } from "@/components/cart/cart-dialog";
+import { cartFormSchema, type CartForm } from "@/server/schema/cart.schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
@@ -50,7 +50,7 @@ export default function Cart() {
   const utils = trpc.useUtils();
 
   const form = useForm<CartForm>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(cartFormSchema),
     defaultValues: {
       items: [],
     },

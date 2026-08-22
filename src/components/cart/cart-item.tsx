@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { NumberInput } from "@/components/inputs/numeric-input";
 import { FormControl, FormField, FormItem } from "@/components/ui/form";
 import type { ControllerRenderProps, UseFormReturn } from "react-hook-form";
-import type { CartForm } from "@/components/cart/cart-dialog";
+import type { CartForm } from "@/server/schema/cart.schema";
 import { ImageZoom } from "../ui/image-zoom";
 import React, { useCallback, useState } from "react";
 import { Skeleton } from "../ui/skeleton";

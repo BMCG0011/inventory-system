@@ -14,24 +14,10 @@ import { useCart } from "@/contexts/cart-context";
 import { CartDialogItem } from "@/components/cart/cart-item";
 import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
-import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { ItemStatus } from "@/lib/item-status";
-
-export const cartItemSchema = z.object({
-  id: z.uuid(),
-  quantity: z
-    .number()
-    .min(1, "Quantity must be at least 1")
-    .int("Quantity must be a whole number"),
-});
-
-export const formSchema = z.object({
-  items: z.array(cartItemSchema),
-});
-
-export type CartForm = z.infer<typeof formSchema>;
+import { cartFormSchema, type CartForm } from "@/server/schema/cart.schema";
 
 function getItemInvalidReason(
   item: ReturnType<typeof useCart>["items"][number],
@@ -58,7 +44,7 @@ export default function CartDialog() {
   const { items, itemCount, checkout } = useCart();
 
   const form = useForm<CartForm>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(cartFormSchema),
     defaultValues: {
       items: [],
     },

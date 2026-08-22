@@ -11,11 +11,6 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
-export const cartItemSchema = z.object({
-  itemId: z.uuid(),
-  quantity: z.number().min(1),
-});
 
 type GetItemsOutput = inferProcedureOutput<
   AppRouter["item"]["list"]
