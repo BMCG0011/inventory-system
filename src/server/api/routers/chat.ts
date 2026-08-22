@@ -144,7 +144,7 @@ class OllamaMcpProvider implements AIProvider {
     );
     this.mcpClient = new Client(
       { name: "inventory-client", version: "1.0.0" },
-      { capabilities: { prompts: {}, resources: {}, tools: {}, logging: {} } },
+      { capabilities: {} },
     );
     this.llm = new ChatOpenAI({
       configuration: {
@@ -240,14 +240,7 @@ You have access to tools for:
 
         mcpClient = new Client(
           { name: "inventory-client", version: "1.0.0" },
-          {
-            capabilities: {
-              prompts: {},
-              resources: {},
-              tools: {},
-              logging: {},
-            },
-          },
+          { capabilities: {} },
         );
 
         await mcpClient.connect(transport);

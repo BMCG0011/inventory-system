@@ -190,7 +190,9 @@ export function ChartAreaDynamic({
             />
             <ChartTooltip
               content={<ChartTooltipContent />}
-              labelFormatter={(label) => `Date: ${label}`}
+              labelFormatter={(label) =>
+                `Date: ${typeof label === "string" ? label : ""}`
+              }
             />
             <Area
               type="monotone"
@@ -236,8 +238,8 @@ export function ChartPieDynamic({
           fill="#8884d8"
           dataKey={dataKey}
           nameKey={nameKey}
-          label={({ [nameKey]: name, percent = 0 }) =>
-            `${String(name)}: ${typeof percent === "number" && !isNaN(percent) ? (percent * 100).toFixed(0) : "N/A"}%`
+          label={({ payload, percent = 0 }) =>
+            `${String(payload?.[nameKey])}: ${typeof percent === "number" && !isNaN(percent) ? (percent * 100).toFixed(0) : "N/A"}%`
           }
         >
           {data.map((_, index) => (

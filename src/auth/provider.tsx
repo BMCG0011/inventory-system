@@ -7,7 +7,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthUIProvider
-      authClient={authClient}
+      // better-auth-ui's bundled AnyAuthClient type lags better-auth's own
+      // customSession + admin plugin type inference; the client is
+      // runtime-compatible, just not type-compatible across the version skew.
+      authClient={
+        authClient as Parameters<typeof AuthUIProvider>[0]["authClient"]
+      }
       navigate={void navigate}
       credentials={import.meta.env.DEV}
       providers={["github"]}
