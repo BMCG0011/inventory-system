@@ -24,9 +24,9 @@ import { Route, Routes } from "react-router-dom";
 import ItemDetails from "@/pages/ItemDetails";
 import {
   ItemStatus,
-  getItemStatusBadge,
   getItemStatusBadgeConfig,
 } from "@/lib/item-status";
+import { ItemStatusBadge } from "@/components/item-crud/itemStatusBadge";
 
 type GetItemsOutput = inferProcedureOutput<
   AppRouter["item"]["list"]
@@ -212,7 +212,7 @@ function Items({
           id: "status",
           header: () => "Status",
           cell: ({ row }) => {
-            return getItemStatusBadge(row.original.status);
+            return <ItemStatusBadge status={row.original.status}/> 
           },
         },
     {

@@ -1,0 +1,10 @@
+{
+    "$schema": "../node_modules/prisma-zod-generator/lib/config/schema.json",
+    "mode": "custom",
+    "pureModels": true,
+    "variants": {
+        "input": {"enabled": false},
+        "result": {"enabled": false},
+        "pure": {"enabled": true}
+    }
+}

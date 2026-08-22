@@ -3,7 +3,7 @@ import type { inferProcedureOutput } from "@trpc/server";
 import type { itemRouter } from "@/server/api/routers/item";
 import { consumableInput, createConsumableInput } from "./consumable.schema";
 import { tagInput } from "./tag.schema";
-import { ItemStatus } from "@prisma/client";
+import {ItemStatusSchema} from "@/prisma-zod/schemas/enums/ItemStatus.schema"
 
 export const itemInput = z.object({
   // technical info
@@ -30,7 +30,7 @@ export const itemInput = z.object({
   tags: z.array(tagInput),
   // location
   locationId: z.uuid("Invalid location ID format"),
-  status: z.enum(ItemStatus).optional(),
+  status: ItemStatusSchema.optional(),
   // purchase info
   costCents: z
     .number()

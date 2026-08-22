@@ -1,4 +1,4 @@
-import { Badge, badgeVariants } from "@/components/ui/badge";
+import { badgeVariants } from "@/components/ui/badge";
 import type { ItemStatus as PrismaItemStatus } from "@prisma/client";
 import type { VariantProps } from "class-variance-authority";
 
@@ -50,17 +50,6 @@ export const itemStatusBadgeConfig: {
     selectable: false,
   },
 ];
-
-export function getItemStatusBadge(status: ItemStatus) {
-  const config = getItemStatusBadgeConfig(status);
-  if (!config) return null;
-
-  return (
-    <Badge variant={config.variant} className={config.className}>
-      {config.name}
-    </Badge>
-  );
-}
 
 export function getItemStatusBadgeConfig(status: ItemStatus) {
   return itemStatusBadgeConfig.filter(({ value }) => value === status)?.[0];

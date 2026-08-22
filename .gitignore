@@ -32,3 +32,6 @@ uploads/
 
 # MinIO local data
 minio_data/
+
+# Prisma-zod generated files
+src/prisma-zod/
